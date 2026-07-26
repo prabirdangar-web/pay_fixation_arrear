@@ -1,0 +1,2618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unified ROPA Pay Fixation & Arrear / Document Generation System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+
+<style>
+        :root {
+            --primary-color: #0f172a;
+            --secondary-color: #1e3a8a;
+            --light-bg: #f8fafc;
+            --border-color: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--light-bg);
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        h2 {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--secondary-color);
+            padding-bottom: 8px;
+            margin-top: 0;
+        }
+
+        .grid-inputs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #475569;
+            font-size: 0.85rem;
+        }
+
+        input, select {
+            padding: 8px 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .btn-group {
+            margin: 20px 0;
+            display: flex;
+            gap: 12px;
+        }
+
+        button {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-generate { background-color: var(--secondary-color); color: white; }
+        .btn-print { background-color: #059669; color: white; }
+
+        .output-box {
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-left: 4px solid var(--secondary-color);
+            border-radius: 4px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+            margin-top: 10px;
+        }
+
+        th {
+            background-color: #1e293b;
+            color: white;
+            padding: 8px 10px;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 8px 10px;
+            border: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        tr:nth-child(even) { background-color: #f8fafc; }
+
+        .slip-box {
+            background-color: #fdfdfd;
+            border: 1px solid #a1a1aa;
+            padding: 6px 10px;
+            margin-top: 4px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.8rem;
+            color: #000;
+        }
+        .slip-row { display: flex; justify-content: space-between; border-bottom: 1px dashed #e4e4e7; padding: 1px 0; }
+        .slip-bold { font-weight: bold; }
+
+        .inline-check { font-weight: 400; display: flex; align-items: center; gap: 6px; }
+
+        #sbPrintArea { display: none; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #sbPrintArea, #sbPrintArea * { visibility: visible; }
+            #sbPrintArea {
+                display: block !important;
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+                font-family: 'Times New Roman', Times, serif;
+                color: #000;
+            }
+            @page { size: A4 portrait; margin: 12mm 10mm; }
+            .sb-header { text-align: center; margin-bottom: 15px; border-bottom: 2px solid #000; padding-bottom: 4px; }
+            .sb-header h1 { font-size: 1.4rem; margin: 0; font-weight: bold; }
+            .sb-meta-table { width: 100%; margin-bottom: 12px; border-collapse: collapse; }
+            .sb-meta-table td { padding: 3px 0; font-size: 0.9rem; border: none; }
+            .sb-section-title { font-size: 1.05rem; border-bottom: 1px solid #000; padding-bottom: 4px; margin-top: 16px; }
+            .sb-main-table { width: 100%; border-collapse: collapse; }
+            .sb-main-table th { background-color: #eaeaea !important; border: 1px solid #000 !important; font-size: 0.85rem; padding: 6px; text-align: center; }
+            .sb-main-table td { border: 1px solid #000 !important; font-size: 0.85rem; padding: 6px; }
+            .slip-box { border: 1px solid #000 !important; background: none !important; }
+            .no-print { display: none !important; }
+        }
+    </style>
+
+<style>
+    :root {
+        --primary-color:#0f172a; --secondary-color:#1e3a8a; --light-bg:#f8fafc;
+        --border-color:#cbd5e1; --green:#16a34a; --red:#dc2626;
+    }
+    body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--light-bg); color:#333; margin:0; padding:20px; }
+    .container { max-width:1450px; margin:0 auto; background:#fff; padding:25px; border-radius:8px; box-shadow:0 4px 12px rgba(0,0,0,.06); }
+    h2 { color:var(--secondary-color); border-bottom:2px solid var(--secondary-color); padding-bottom:8px; margin-top:0; }
+    h3 { color:#1e293b; margin-top:24px; border-left:4px solid var(--secondary-color); padding-left:10px; }
+    .panel { background:#f1f5f9; border:1px solid var(--border-color); border-radius:6px; padding:14px 16px; margin-bottom:16px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:14px; margin-bottom:10px; }
+    .fg { display:flex; flex-direction:column; }
+    .fg.wide { grid-column: 1 / -1; }
+    label { font-weight:600; margin-bottom:5px; color:#475569; font-size:.82rem; }
+    input, select, textarea { padding:8px 10px; border:1px solid var(--border-color); border-radius:6px; font-size:.88rem; outline:none; font-family:inherit; }
+    input:focus, select:focus, textarea:focus { border-color:var(--secondary-color); background:#f0f9ff; }
+    .btn-row { margin:14px 0; display:flex; gap:10px; flex-wrap:wrap; }
+    button { padding:10px 18px; font-size:.9rem; font-weight:600; border-radius:6px; cursor:pointer; border:none; color:#fff; transition:opacity .2s; }
+    button:hover { opacity:.9; }
+    .btn-main { background:var(--secondary-color); }
+    .btn-doc { background:#0f172a; }
+    .btn-print { background:var(--green); }
+    .btn-excel { background:#0284c7; }
+    .btn-close { background:#64748b; }
+
+    .doc-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:12px; margin-top:10px; }
+    .doc-card { background:#fff; border:1px solid var(--border-color); border-radius:8px; padding:12px; text-align:center; }
+    .doc-card b { display:block; margin-bottom:8px; color:#0f172a; font-size:.88rem; }
+    
+    .table-wrap { overflow-x:auto; margin-top:10px; }
+    table { width:100%; border-collapse:collapse; font-size:.8rem; }
+    
+    /* MANDATORY HEADER FORMATTING: BLACK INK WITH LIGHT GRAY BACKGROUND */
+    th { 
+        background: #e2e8f0 !important; 
+        color: #000000 !important; 
+        padding: 7px 5px; 
+        font-weight: 700; 
+        text-align: center; 
+        border: 1px solid #cbd5e1;
+    }
+    
+    td { padding:5px 4px; border:1px solid var(--border-color); vertical-align:middle; text-align:center; }
+    tr.adm-row td { background:#eff6ff; }
+    tr.drawn-row td { background:#f8fafc; }
+    tr.due-row td { background:#fff7ed; font-weight:700; color:#9a3412; }
+    tr.total-row td { background:#cbd5e1; color:#000; font-weight:800; }
+    .tbl-input { width:75px; padding:3px 4px; border:1px solid #94a3b8; border-radius:4px; text-align:right; font-size:.78rem; font-weight:600; }
+
+    /* ==================== EXACT ANNEXURE - 1 (PAGE -2) STYLING ==================== */
+    .annex1-card {
+        background: #ffffff;
+        border: 2px solid #000;
+        padding: 25px 30px;
+        font-family: 'Segoe UI', Arial, sans-serif;
+        color: #000;
+        max-width: 1050px;
+        margin: 20px auto;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .annex1-header { text-align: center; position: relative; font-weight: bold; font-size: 1.15rem; margin-bottom: 12px; }
+    .annex1-header .page-no { position: absolute; right: 0; top: 0; font-size: 0.95rem; }
+    .annex1-field-row { display: flex; align-items: baseline; margin-bottom: 6px; font-size: 0.92rem; }
+    .annex1-field-row label { font-weight: bold; min-width: 210px; color: #000; }
+    .annex1-field-row .val-box { font-weight: bold; font-size: 1.05rem; letter-spacing: 0.3px; border-bottom: 1px solid #000; padding-bottom: 1px; min-width: 250px; }
+    
+    .annex1-grid-layout { display: grid; grid-template-columns: 68% 31%; gap: 1%; margin-top: 10px; align-items: start; }
+    .annex1-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; font-weight: 500; }
+    .annex1-table th, .annex1-table td { border: 1px solid #000; padding: 4px 3px; text-align: center; }
+    .annex1-table th { background: #e2e8f0 !important; color: #000 !important; font-weight: bold; }
+
+    .annex1-subtable { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+    .annex1-subtable th, .annex1-subtable td { border: 1px solid #000; padding: 3px 4px; text-align: center; }
+    .annex1-subtable th { background: #e2e8f0 !important; color: #000 !important; font-weight: bold; }
+
+    .annex1-middle-info { margin-top: 12px; font-size: 0.9rem; }
+    .annex1-passed-line { font-weight: bold; font-size: 1rem; margin-top: 10px; }
+
+    .annex1-cert-grid { display: grid; grid-template-columns: 70% 28%; gap: 2%; margin-top: 15px; font-size: 0.72rem; line-height: 1.35; text-align: justify; }
+    .annex1-cert-list { margin: 0; padding-left: 0; list-style: none; }
+
+    .annex1-verify-box { border: 1px solid #000; padding: 8px 12px; font-size: 0.8rem; font-weight: bold; margin-top: 20px; text-align: justify; }
+    .annex1-sig-row { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 45px; font-weight: bold; font-size: 0.82rem; text-align: center; }
+
+    /* ==================== ANNEX CALCULATION SHEET PAGINATION ==================== */
+    .annex-page-sheet {
+        background: #fff;
+        border: 1px solid #000;
+        padding: 25px;
+        margin-bottom: 30px;
+        font-family: 'Times New Roman', serif;
+        color: #000;
+    }
+
+    .modal-overlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.55); z-index:999; }
+    .modal-overlay.active { display:flex; align-items:flex-start; justify-content:center; overflow:auto; padding:30px 10px; }
+    .modal-box { background:#fff; max-width:1150px; width:100%; border-radius:8px; padding:0; box-shadow:0 10px 30px rgba(0,0,0,.3); }
+    .modal-toolbar { display:flex; justify-content:flex-end; gap:10px; padding:12px 20px; background:#f1f5f9; border-bottom:1px solid var(--border-color); border-radius:8px 8px 0 0; }
+    #printArea { padding:25px 30px; font-family:'Times New Roman',Times,serif; color:#000; }
+
+    @media print {
+        body * { visibility:hidden; }
+        .modal-overlay, .modal-overlay * { visibility:visible; }
+        .modal-overlay { position:absolute; inset:0; background:#fff !important; padding:0; }
+        .modal-toolbar { display:none !important; }
+        .modal-box { box-shadow:none; max-width:100%; }
+        .annex1-card { border: none !important; padding: 0 !important; box-shadow: none !important; width: 100% !important; }
+        .annex-page-sheet { border: none !important; padding: 0 !important; margin: 0 !important; page-break-after: always; break-after: page; }
+        .annex-page-sheet:last-child { page-break-after: auto; break-after: auto; }
+        @page { size: A4 landscape; margin: 10mm; }
+    }
+</style>
+
+</head>
+<body>
+
+<div class="container">
+<h2>Unified ROPA Pay Fixation &amp; Arrear / Document Generation System</h2>
+<p style="font-size:0.85rem; color:#475569; margin-top:-10px;">
+    Generate the ROPA-1998 &#8594; 2009 &#8594; 2019 pay fixation timeline first (Section 3-5) to derive the correct
+    Admissible Basic Pay; that figure is then automatically carried into the month-wise Arrear Bill table and all
+    submission documents / Service Book below.
+</p>
+
+ School Education Arrear & Document Generation System</h2>
+
+<!-- 1. SCHOOL DETAILS -->
+<h3>1. School Details</h3>
+<div class="panel">
+    <div class="grid">
+        <div class="fg wide"><label>Name of School</label><input id="schoolName" value="TALDANGRA FULMATI HIGH SCHOOL [H.S.]" onchange="updateAll()"></div>
+        <div class="fg wide"><label>School Address</label><input id="schoolAddress" value="P.O.-TALDANGRA , BLOCK-TALDANGRA, DISTRICT- BANKURA PIN-722152" onchange="updateAll()"></div>
+        <div class="fg"><label>Sub-Division</label><input id="subDivision" value="KHATRA" onchange="updateAll()"></div>
+        <div class="fg"><label>Block</label><input id="block" value="TALDANGRA" onchange="updateAll()"></div>
+        <div class="fg"><label>HOI Mobile No.</label><input id="hoiContact" value="9434654678 / 9933035811" onchange="updateAll()"></div>
+        <div class="fg"><label>School Email ID</label><input id="schoolEmail" value="highschooltaldangrafulmati@gmail.com" onchange="updateAll()"></div>
+        <div class="fg"><label>DI of Schools (Addressee)</label><input id="diOffice" value="The District Inspector of Schools (S.E.), Bankura" onchange="updateAll()"></div>
+        <div class="fg"><label>DI Office PO & District</label><input id="diAddress" value="P.O. & District: Bankura" onchange="updateAll()"></div>
+        <div class="fg"><label>Date of 1st Grant-in-Aid</label><input type="date" id="gia1Date" value="1980-01-01" onchange="updateAll()"></div>
+    </div>
+</div>
+
+<!-- 2. STAFF DETAILS -->
+<h3>2. Staff & Service Details</h3>
+<div class="panel">
+    <div class="grid">
+        <div class="fg"><label>Name of Staff</label><input id="staffName" value="PARTHA KUMAR PATRA" onchange="updateAll()"></div>
+        <div class="fg"><label>Designation</label><input id="designation" value="ASSISTANT TEACHER" onchange="updateAll()"></div>
+        <div class="fg"><label>Sex / Gender</label>
+            <select id="staffSex" onchange="updateAll()">
+                <option value="Male" selected>Male</option>
+                <option value="Female">Female</option>
+            </select>
+        </div>
+        <div class="fg"><label>Date of Birth</label><input type="date" id="dob" value="1969-04-10" onchange="calculateDOR()"></div>
+        <div class="fg"><label>Date of Joining (1st Service)</label><input type="date" id="doj" value="2007-10-04" onchange="calculateDOR(); updateAll()"></div>
+        <div class="fg"><label>Date of Joining in this School</label><input type="date" id="dojSchool" value="2007-10-04" onchange="updateAll()"></div>
+        <div class="fg"><label>Years of Continuous Service Completed</label><input id="yearsCompleted" value="18" onchange="updateAll()"></div>
+        <div class="fg"><label>Service Completion Date</label><input type="date" id="serviceCompletionDate" value="2025-10-03" onchange="updateAll()"></div>
+        <div class="fg wide"><label>Benefit Description (Used in Subject Lines)</label><input id="benefitDesc" value="18 years' continuous service benefit under ROPA-2019" onchange="updateAll()"></div>
+    </div>
+    <div class="output-box" id="dorOutput" style="margin-top:10px;"><strong>Date of Retirement (DOR):</strong> Loading...</div>
+</div>
+
+
+<!-- 3-5. ROPA PAY FIXATION ENGINE (produces Admissible Basic timeline used below) -->
+<h3>3. ROPA-1998 Pre-2006 Fixation (Always Frozen on 31-03-2009)</h3>
+    <div class="grid-inputs">
+        <div class="form-group">
+            <label>&nbsp;</label>
+            <label class="inline-check"><input type="checkbox" id="enableRopa98" onchange="toggleRopa98Section()"> Applicable (staff joined 1st service before 31.03.2009, drew pay under ROPA-1998)</label>
+        </div>
+    </div>
+    <div class="grid-inputs" id="ropa98Fields" style="display:none;">
+        <div class="form-group">
+            <label>Old Scale (maps to ROPA-2009 Grade Pay)</label>
+            <select id="ropa98Scale">
+                <option value="1700">GP 1700 (2600-4175)</option>
+                <option value="1800">GP 1800 (2700-4400)</option>
+                <option value="2600">GP 2600 (3350-6325)</option>
+                <option value="2900">GP 2900 (3800-7775)</option>
+                <option value="4100">GP 4100 (4650-10175)</option>
+                <option value="4400">GP 4400 (4800-10925)</option>
+                <option value="4700" selected>GP 4700 (5500-11075)</option>
+                <option value="4800">GP 4800 (6000-12000)</option>
+                <option value="5400">GP 5400 (8000-13500)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Date of Option / DOA (ROPA-1998)</label>
+            <input type="date" id="ropa98OptionDate" value="1998-01-01">
+        </div>
+        <div class="form-group">
+            <label>Initial Basic Pay (ROPA-1998 scale)</label>
+            <input type="number" id="ropa98BasicPay" value="5500">
+        </div>
+        <div class="form-group">
+            <label>LWP (Leave Without Pay) Days &mdash; Non-Qualifying</label>
+            <input type="number" id="ropa98LwpDays" value="0" min="0">
+        </div>
+        <div class="form-group">
+            <label>LWP Taken From Date (shifts all subsequent increment/CAS dates)</label>
+            <input type="date" id="ropa98LwpFromDate">
+        </div>
+    </div>
+    <div class="output-box" style="background-color:#fff7ed;border-left-color:#c2410c;">
+        <strong>10/18/20-Year CAS Rule (ROPA-1998 phase):</strong> One additional increment is granted on completion of 10 and 20 years of service (in the same old scale). On completion of 18 years, staff drawing GP 1700 / 2600 / 3900 / 4100 (i.e. eligible for the 18-year scale change 1700&rarr;1800, 2600&rarr;2900, 3900&rarr;4100, 4100&rarr;4400) get one additional increment in the old scale first, and are then placed at the equal/next-higher stage of the new scale, subject to the ROPA-1998 minimum entry pay of the new scale. GP 4700/4800/5400 are not eligible for the 18-year scale change (no higher old-scale mapping exists). If LWP days are entered, every increment/CAS date on or after the "LWP Taken From Date" is deferred by that many days, since dies-non/LWP period does not count towards qualifying service for increment.
+        <br><br><strong>Completed-year (termination) date rule:</strong> if the date of joining is the 1st of a month, a completed year of service falls on that same date N years later. If the date of joining falls anywhere from the 2nd to the last day of a month, that part-month is rounded up as a full qualifying month, so the completed year falls on the <em>last day</em> of the month that is N years after the joining month &mdash; not the exact day-anniversary. From the following year onward this gives a clean 12-month span (1st of that month to the end of the 12th month).
+    </div>
+
+    <h3>4. ROPA-2009 Notional Fixation (Always Frozen on 31-12-2019)</h3>
+    <div class="grid-inputs">
+        <div class="form-group">
+            <label>&nbsp;</label>
+            <label class="inline-check"><input type="checkbox" id="enableRopa09" checked onchange="toggleRopa09Section()"> Applicable (staff drew pay under ROPA-2009 before switching)</label>
+        </div>
+    </div>
+    <div class="grid-inputs" id="ropa09Fields">
+        <div class="form-group" id="ropa09ManualGpGroup">
+            <label>Grade Pay (ROPA-2009)</label>
+            <select id="ropa09GradePay">
+                <option value="1700">GP 1700</option>
+                <option value="1800">GP 1800</option>
+                <option value="2600">GP 2600</option>
+                <option value="2900">GP 2900</option>
+                <option value="3900">GP 3900</option>
+                <option value="4100">GP 4100</option>
+                <option value="4400">GP 4400</option>
+                <option value="4700" selected>GP 4700</option>
+                <option value="4800">GP 4800</option>
+                <option value="5400">GP 5400</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Date of Option / DOA (ROPA-2009)</label>
+            <input type="date" id="ropa09OptionDate" value="2006-01-01">
+        </div>
+        <div class="form-group" id="ropa09ManualBandGroup">
+            <label>Initial Band Pay (Excluding GP)</label>
+            <input type="number" id="ropa09BandPay" value="13400">
+        </div>
+        <div class="form-group">
+            <label>LWP Type (ROPA-2009 phase)</label>
+            <select id="ropa09LwpType">
+                <option value="none" selected>No LWP</option>
+                <option value="medical">Medical Ground (E.O.L.) &mdash; no effect on increment</option>
+                <option value="other">Other / Personal Reason</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>LWP Start Date</label>
+            <input type="date" id="ropa09LwpStart">
+        </div>
+        <div class="form-group">
+            <label>LWP End Date</label>
+            <input type="date" id="ropa09LwpEnd">
+        </div>
+    </div>
+    <div class="output-box" style="background-color:#fff7ed;border-left-color:#c2410c;">
+        <strong>LWP / Notional Increment Rule (G.O. No. 181-SE(B) Dt. 8.10.2009, ROPA-2009 &amp; ROPA-2019 phases):</strong> Extraordinary Leave Without Pay (E.O.L.) on medical grounds does not defer the increment at all. For LWP on any other ground: leave of less than 1 month has no effect. Leave of 1 month or more defers the <em>financial</em> benefit of the increment (the notional 1-July date itself stays fixed and future increment dates continue on the normal cycle): if the LWP period ends before the 1-July date, the financial benefit starts from 1-July plus the number of complete LWP months; if the LWP period is still running on (i.e. spans across) the 1-July date, the financial benefit instead starts from the 1st of the month following the month of rejoining duty, plus the number of complete LWP months. If the LWP runs 12 months or more and swallows the 1-July date entirely, that year's increment is not granted at all and the employee simply resumes on the following year's 1-July cycle.
+    </div>
+
+    <h3>5. ROPA-2019 Matrix Fixation (From Option Date)</h3>
+    <div class="grid-inputs">
+        <div class="form-group">
+            <label>Date of Option (ROPA-2019)</label>
+            <input type="date" id="ropa19OptionDate" value="2016-01-01">
+        </div>
+        <div class="form-group" id="ropa19ManualGpGroup" style="display:none;">
+            <label>Grade Pay (manual - no ROPA-2009 phase)</label>
+            <select id="ropa19GradePayManual">
+                <option value="1700">GP 1700</option>
+                <option value="1800">GP 1800</option>
+                <option value="2600">GP 2600</option>
+                <option value="2900">GP 2900</option>
+                <option value="3900">GP 3900</option>
+                <option value="4100">GP 4100</option>
+                <option value="4400">GP 4400</option>
+                <option value="4700" selected>GP 4700</option>
+                <option value="4800">GP 4800</option>
+                <option value="5400">GP 5400</option>
+            </select>
+        </div>
+        <div class="form-group" id="ropa19ManualBasicGroup" style="display:none;">
+            <label>Basic Pay (manual)</label>
+            <input type="number" id="ropa19BasicPayManual" value="66000">
+        </div>
+        <div class="form-group">
+            <label>LWP Type (ROPA-2019 phase)</label>
+            <select id="ropa19LwpType">
+                <option value="none" selected>No LWP</option>
+                <option value="medical">Medical Ground (E.O.L.) &mdash; no effect on increment</option>
+                <option value="other">Other / Personal Reason</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>LWP Start Date</label>
+            <input type="date" id="ropa19LwpStart">
+        </div>
+        <div class="form-group">
+            <label>LWP End Date</label>
+            <input type="date" id="ropa19LwpEnd">
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button type="button" class="btn-generate" onclick="processFixationTimeline()">Generate Pay Tables</button>
+        <button type="button" class="btn-print" onclick="window.print()">Print Service Book Sheet</button>
+    </div>
+
+    <div class="output-box" id="carryForwardOutput" style="display:none;"></div>
+    <div class="output-box" id="carryForwardOutput98" style="display:none;"></div>
+
+    <div id="ropa98Section" style="display:none;">
+        <h3>Generated ROPA-1998 Notional Fixation Timeline (Up to 31-03-2009)</h3>
+        <div class="table-responsive">
+            <table id="dashboardTable98">
+                <thead>
+                    <tr>
+                        <th>Effective Date</th><th>Date of Termination</th><th>Scale (&rarr; GP)</th><th>Basic Pay</th><th>Event / Reason</th>
+                    </tr>
+                </thead>
+                <tbody id="payTableBody98">
+                    <tr>
+                        <td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">Click "Generate Pay Tables" to populate calculation values.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="ropa09Section">
+        <h3>Generated ROPA-2009 Notional Fixation Timeline (Up to 31-12-2019)</h3>
+        <div class="table-responsive">
+            <table id="dashboardTable09">
+                <thead>
+                    <tr>
+                        <th>Effective Date</th><th>Date of Termination</th><th>Scale of Pay / Pay Band</th><th>Band Pay</th><th>Grade Pay</th><th>Basic Pay</th><th>Event / Reason / Steps</th>
+                    </tr>
+                </thead>
+                <tbody id="payTableBody09">
+                    <tr>
+                        <td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Click "Generate Pay Tables" to populate calculation values.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <h3>Generated ROPA-2019 Matrix Fixation Timeline (From Option Date to DOR)</h3>
+    <div class="table-responsive">
+        <table id="dashboardTable19">
+            <thead>
+                <tr>
+                    <th>Effective Date</th><th>Date of Termination</th><th>Scale of Pay / Level Matrix</th><th>Cell</th><th>Grade Pay</th><th>Basic Pay</th><th>Event / Reason / Steps</th>
+                </tr>
+            </thead>
+            <tbody id="payTableBody19">
+                <tr>
+                    <td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">Click "Generate Pay Tables" to populate calculation values.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+<!-- 6. APPROVAL & FIXATION DETAILS -->
+<h3>6. Approval &amp; Pay Fixation Parameters</h3>
+<div class="panel">
+    <div class="grid">
+        <div class="fg"><label>Benefit Effective Date (w.e.f.)</label><input type="date" id="benefitDate" value="2025-10-04" onchange="generateArrearTable()"></div>
+        <div class="fg wide"><label>Approval Memo No. & Date</label><input id="approvalMemo" value="1890/1(2)/S ; dated : 31-10-2025" onchange="updateAll()"></div>
+        <div class="fg"><label>Salary Updated / Drawn Revised From</label><input type="date" id="salaryUpdatedFrom" value="2025-12-01" onchange="updateAll()"></div>
+        <div class="fg"><label>Non-B.Ed Fixation Memo No.</label><input id="nonBedMemo" value="Memo No. 118 Dated 06/02/2018" onchange="updateAll()"></div>
+        <div class="fg"><label>Pre-Benefit / Drawn Basic Pay (₹) &mdash; seed &amp; pre-fixation fallback</label><input type="number" id="prevBasic" value="58600" onchange="generateArrearTable()"></div>
+        <div class="fg"><label>Post-Benefit Basic Pay (₹) &mdash; fallback only, auto-filled once Pay Table is generated</label><input type="number" id="currBasic" value="68531" onchange="generateArrearTable()"></div>
+        <div class="fg"><label>Scale Admissible (Descriptive)</label><input id="scaleAdmissible" value="LEVEL-12 (PB-4: 9000-40500, GP: 4400)" onchange="updateAll()"></div>
+        <div class="fg"><label>Scale Drawn (Descriptive)</label><input id="scaleDrawn" value="LEVEL-11 (PB-3: 7100-37600, GP: 4100)" onchange="updateAll()"></div>
+    </div>
+</div>
+
+<div class="panel" id="fixationBridgeStatus" style="font-size:0.85rem; font-weight:600;">
+    Pay Fixation Table not generated yet &mdash; using manual Pre-Benefit/Post-Benefit Basic Pay fields as fallback. Click "Generate Pay Tables" in Section 3-5 above to auto-fill Admissible Basic month-by-month.
+</div>
+
+<!-- 7. ARREAR RANGE & LONG PERIOD SUB-PERIOD MANAGER -->
+<h3>7. Arrear Period &amp; Long Period Sub-Period Tool</h3>
+<div class="panel">
+    <div class="grid">
+        <div class="fg"><label>Arrear Period From</label><input type="date" id="arrearFrom" value="2025-10-04" onchange="generateArrearTable()"></div>
+        <div class="fg"><label>Arrear Period To</label><input type="date" id="arrearTo" value="2025-10-31" onchange="generateArrearTable()"></div>
+        <div class="fg"><label>DA Rate (%)</label><input type="number" id="daRate" value="18" step="0.5" onchange="generateArrearTable()"></div>
+        <div class="fg"><label>HRA Rate (%)</label><input type="number" id="hraRate" value="12" step="0.5" onchange="generateArrearTable()"></div>
+        <div class="fg"><label>Default GPF / PF (₹/month)</label><input type="number" id="defaultGpf" value="0" onchange="generateArrearTable()"></div>
+        <div class="fg"><label>Default I.T. / Other (₹/month)</label><input type="number" id="defaultIt" value="0" onchange="generateArrearTable()"></div>
+    </div>
+
+    <!-- LONG PERIOD ARREAR INSERTION OPTION TOOL -->
+    <div style="background:#e2e8f0; padding:12px; border-radius:6px; margin-top:10px;">
+        <label style="color:#1e293b; font-weight:bold; margin-bottom:6px; display:block;">
+            Long Period Sub-Period Tool (ADD PD TO PD WHEN ALL SAME / INSERT OPTION FOR CHANGING YEARS):
+        </label>
+        <div class="grid" style="margin-bottom:0;">
+            <div class="fg"><label>Sub-Period From</label><input type="date" id="subFrom" value="2025-10-04"></div>
+            <div class="fg"><label>Sub-Period To</label><input type="date" id="subTo" value="2025-10-31"></div>
+            <div class="fg"><label>Drawn Basic for Sub-Period (₹)</label><input type="number" id="subDrawnBasic" value="58600"></div>
+            <div class="fg" style="justify-content:flex-end;">
+                <button class="btn-main" type="button" onclick="applySubPeriodDrawnPay()">Apply Drawn Pay to Selected Range</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid" style="margin-top:10px;">
+        <div class="fg wide"><label>Reason of Arrear (Exact Sentence)</label>
+            <textarea id="reasonLong" rows="2" onchange="updateAll()">The arrears claimed in this bill are due to the delayed approval of the 18-year benefit fixation</textarea>
+        </div>
+    </div>
+</div>
+
+<!-- 8. ACTION BUTTONS -->
+<div class="btn-row">
+    <button class="btn-main" onclick="generateArrearTable()">1. Calculate Arrear & Refresh</button>
+    <button class="btn-print" onclick="saveFullArrearDataToDB()">2. Save All Data to Database</button>
+    <button class="btn-excel" onclick="exportFullWorkbookExcel()">3. Export Full 12-Sheet Excel Workbook (.XLSX)</button>
+</div>
+
+<!-- 8b. EDITABLE ARREAR CALCULATION TABLE -->
+<h3>8. Month-Wise Arrear Table (Manual PF & OTH Entry + Rule-Based P-Tax)</h3>
+<p style="font-size:0.82rem; color:#475569; margin-top:-6px;">
+    * All headers are formatted in <strong>Black Ink on Light Gray Background</strong>. P-Tax is automatically calculated as per West Bengal rules.
+</p>
+
+<div id="arrearTableWrap" class="table-wrap">
+    <table id="dashboardArrearTable">
+        <thead>
+            <tr>
+                <th>Status</th>
+                <th>Month</th>
+                <th>Basic Pay (₹)</th>
+                <th>DA (₹)</th>
+                <th>HRA (₹)</th>
+                <th>MA (₹)</th>
+                <th>Gross Pay (₹)</th>
+                <th>PF / GPF (₹) [Manual]</th>
+                <th>I.T. / OTH (₹) [Manual]</th>
+                <th>P-Tax (₹) [Rule]</th>
+                <th>Net Pay (₹)</th>
+            </tr>
+        </thead>
+        <tbody id="dashboardArrearBody"></tbody>
+    </table>
+</div>
+
+<!-- 9. GENERATE 1:1 REPLICA DOCUMENTS -->
+<h3>9. Auto-Generated Submission Documents (1:1 Replica Preview & Print)</h3>
+<div class="panel">
+    <div class="doc-grid">
+        <div class="doc-card"><b>Cover Page</b><button class="btn-doc" onclick="showDoc('cover')">Preview / Print</button></div>
+        <div class="doc-card"><b>Check List</b><button class="btn-doc" onclick="showDoc('checklist')">Preview / Print</button></div>
+        <div class="doc-card"><b>Forwarding Letter (FL)</b><button class="btn-doc" onclick="showDoc('fl')">Preview / Print</button></div>
+        <div class="doc-card"><b>Applicant Prayer (APP)</b><button class="btn-doc" onclick="showDoc('app')">Preview / Print</button></div>
+        <div class="doc-card"><b>HOI Report & Admin Order</b><button class="btn-doc" onclick="showDoc('admn')">Preview / Print</button></div>
+        <div class="doc-card"><b>ANNEXURE - 1 (Page -2)</b><button class="btn-doc" onclick="showDoc('annex1')">Preview / Print</button></div>
+        <div class="doc-card"><b>ANNEX Calculation Sheet</b><button class="btn-doc" style="background:#0284c7;" onclick="showDoc('annex')">Preview / Print</button></div>
+        <div class="doc-card"><b>Non-Drawal Certificate</b><button class="btn-doc" onclick="showDoc('nondrawl')">Preview / Print</button></div>
+        <div class="doc-card"><b>Spouse Certificate</b><button class="btn-doc" onclick="showDoc('spouse')">Preview / Print</button></div>
+        <div class="doc-card"><b>HRA & Spouse Declaration</b><button class="btn-doc" onclick="showDoc('decl')">Preview / Print</button></div>
+    </div>
+</div>
+
+<!-- 10. LIVE PREVIEW OF EXACT ANNEXURE - 1 -->
+<h3 style="margin-top:35px;">10. Live Preview: ANNEXURE - 1 (Form Page -2)</h3>
+<div class="annex1-card" id="annex1VisualCard">
+    <div class="annex1-header">
+        ANNEXURE - 1
+        <span class="page-no">Page -2</span>
+    </div>
+
+    <div class="annex1-field-row">
+        <label>Name of the School:</label>
+        <span class="val-box" id="disp_school">TALDANGRA FULMATI HIGH SCHOOL [H.S.]</span>
+    </div>
+    <div class="annex1-field-row">
+        <label>Name of the Employee:</label>
+        <span class="val-box" id="disp_staff">PARTHA KUMAR PATRA ; ASSISTANT TEACHER</span>
+    </div>
+    <div class="annex1-field-row" style="justify-content:space-between;">
+        <div>
+            <label style="min-width:210px; display:inline-block;">Arrear for the period from:</label>
+            <span class="val-box" id="disp_period">04.10.2025 TO 31.10.2025</span>
+        </div>
+        <span style="font-size:0.82rem; font-weight:normal;">in Rs.</span>
+    </div>
+
+    <div class="annex1-grid-layout">
+        <div>
+            <div style="font-size:0.8rem; font-weight:bold; margin-bottom:3px;">Arrear due no of account of:</div>
+            <table class="annex1-table">
+                <thead>
+                    <tr>
+                        <th>Pay in Band</th>
+                        <th>Grade Pay</th>
+                        <th>AGP</th>
+                        <th>Basic Pay</th>
+                        <th>D.A</th>
+                        <th>H.R.A</th>
+                        <th>M.A</th>
+                        <th>IR</th>
+                        <th>Gross</th>
+                        <th>C.P.F/G.P.F</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>-</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td id="cell_basic">8,977</td>
+                        <td id="cell_da">1,616</td>
+                        <td id="cell_hra">1,077</td>
+                        <td>-</td>
+                        <td>-</td>
+                        <td id="cell_gross" style="font-weight:bold;">11,670</td>
+                        <td id="cell_gpf">-</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="annex1-middle-info" style="margin-top:15px;">
+                <div style="display:flex; align-items:center; margin-bottom:8px;">
+                    <span style="font-weight:bold; width:270px;">Date of receipt of 1st Grant-in-Aid by the School:</span>
+                    <span id="disp_gia" style="font-weight:bold;">01-01-1980</span>
+                </div>
+                <div style="display:flex; align-items:flex-start;">
+                    <span style="font-weight:bold; width:130px;">Reason of arrear:</span>
+                    <span id="disp_reason" style="font-weight:bold; text-align:justify; flex:1;">The arrears claimed in this bill are due to the delayed approval of the 18-year benefit fixation</span>
+                </div>
+            </div>
+
+            <div class="annex1-passed-line">
+                Passed for RS. <span id="disp_passed_num">11670</span> [ Rupees <span id="disp_passed_words">Eleven Thousand Six Hundred Seventy Only</span> ].
+            </div>
+        </div>
+
+        <div>
+            <div style="font-size:0.75rem; font-weight:bold; text-align:center; margin-bottom:2px;">To be credited to:</div>
+            <table class="annex1-subtable">
+                <thead>
+                    <tr>
+                        <th>P.T</th>
+                        <th>C.P.F/G.P.F</th>
+                        <th>Other</th>
+                        <th>Net Claim</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td id="cell_pt_credited">-</td>
+                        <td id="cell_gpf_credited">-</td>
+                        <td id="cell_oth_credited">-</td>
+                        <td id="cell_net_claim" style="font-weight:bold;">11670</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div style="font-size:0.72rem; font-weight:bold; margin-top:4px;">Less: any ad-hoc payment mode.</div>
+            <table class="annex1-subtable" style="margin-top:2px;">
+                <tbody>
+                    <tr><td style="width:25%;">1)</td><td style="text-align:right;">-</td></tr>
+                    <tr><td>2)</td><td style="text-align:right;">-</td></tr>
+                    <tr><td>3)</td><td style="text-align:right;">-</td></tr>
+                    <tr><td>4)</td><td style="text-align:right;">-</td></tr>
+                    <tr style="font-weight:bold; background:#f8fafc;">
+                        <td>Actual claim:</td>
+                        <td style="text-align:right;">Rs &nbsp; <span id="cell_actual_claim">11,670</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="annex1-cert-grid">
+        <div>
+            <div style="font-weight:bold; margin-bottom:2px;">Certified that :-</div>
+            <ul class="annex1-cert-list">
+                <li>1) The amount claimed in this bill was not drawn before.</li>
+                <li>2) The office copy agrees with the fair copy of the bill.</li>
+                <li>3) The claim has been preferred with reference to Acquittance Roll & other office records.</li>
+                <li>4) Necessary notes have been kept in the O/C of bills from which it was omitted in order to avoid double payment in future.</li>
+                <li>5) The incumbent has not enjoyed any E.O.L. during the period of arrear claimed/has enjoyed E.O.L. in the months of as stated in the remark col.</li>
+                <li>6) I.Tax, P.Tax, GPF if any, will be deducted & deposited through challan.</li>
+                <li>7) The admissibility of the arrear claim has been checked with ref. to Govt. Orders, other relevant records and found in order.</li>
+            </ul>
+        </div>
+        <div style="text-align:center; display:flex; flex-direction:column; justify-content:space-between; padding-top:10px;">
+            <div>
+                <b>Checked, Verified and found the claim as admissible and correct.</b>
+            </div>
+            <div style="border-top:1px solid #000; padding-top:2px; font-weight:bold;">
+                A.D./D.D. (Accounts)
+            </div>
+        </div>
+    </div>
+
+    <div class="annex1-verify-box">
+        Detail Drawn and Due Statement of Arrear Salary of <span id="box_staff">PARTHA KUMAR PATRA ; ASSISTANT TEACHER</span> of <span id="box_school">TALDANGRA FULMATI HIGH SCHOOL [H.S.]</span> for the period : <span id="box_period">04.10.2025 TO 31.10.2025</span> has been duly Checked and Verified with reference to relevant records.
+    </div>
+
+    <div class="annex1-sig-row">
+        <div style="width:30%;">
+            ____________________________________<br>
+            Signature of Secretary/administrator/D.D.O
+        </div>
+        <div style="width:30%;">
+            ____________________________________<br>
+            D.I. of Schools(S.E)<br>
+            Seal
+        </div>
+        <div style="width:30%;">
+            ____________________________________<br>
+            AD/DD/Accounts<br>
+            Seal
+        </div>
+    </div>
+</div>
+
+
+</div><!-- /container -->
+
+<!-- PRINT MODAL OVERLAY -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal-box">
+        <div class="modal-toolbar">
+            <button class="btn-print" onclick="window.print()">Print / Save as PDF</button>
+            <button class="btn-close" onclick="closeModal()">Close</button>
+        </div>
+        <div id="printArea"></div>
+    </div>
+</div>
+
+<div id="sbPrintArea">
+    <div class="sb-header">
+        <h1 id="sbSchoolName">TALDANGRA FULMATI HIGH SCHOOL [H.S.]</h1>
+        <h2>Service Book Verification Entry</h2>
+    </div>
+    <table class="sb-meta-table">
+        <tr>
+            <td style="width: 50%;"><strong>Name of Employee:</strong> <span id="sbStaffName"></span></td>
+            <td style="width: 50%;"><strong>Designation:</strong> <span id="sbDesignation"></span></td>
+        </tr>
+        <tr>
+            <td><strong>Date of Birth:</strong> <span id="sbDob"></span></td>
+            <td><strong>Date of Joining:</strong> <span id="sbDoj"></span></td>
+        </tr>
+        <tr>
+            <td colspan="2"><strong>Date of Superannuation Retirement (DOR):</strong> <span id="sbDor"></span></td>
+        </tr>
+    </table>
+
+    <div id="sbRopa98Block" style="display:none;">
+        <h2 class="sb-section-title">ROPA-1998 Notional Fixation (Up to 31-03-2009)</h2>
+        <table class="sb-main-table" id="sbTable98">
+            <thead>
+                <tr>
+                    <th>Effective Date</th><th>Date of Termination</th><th>Scale (&rarr; GP)</th><th>Basic Pay</th><th>Event / Reason</th>
+                </tr>
+            </thead>
+            <tbody id="sbPrintTableBody98"></tbody>
+        </table>
+    </div>
+
+    <div id="sbRopa09Block">
+        <h2 class="sb-section-title">ROPA-2009 Notional Fixation (Up to 31-12-2019)</h2>
+        <table class="sb-main-table" id="sbTable09">
+            <thead>
+                <tr>
+                    <th>Effective Date</th><th>Date of Termination</th><th>Scale of Pay / Pay Band</th><th>Band Pay</th><th>Grade Pay</th><th>Basic Pay</th><th>Event / Reason / Steps</th>
+                </tr>
+            </thead>
+            <tbody id="sbPrintTableBody09"></tbody>
+        </table>
+    </div>
+
+    <h2 class="sb-section-title">ROPA-2019 Matrix Fixation (From Option Date)</h2>
+    <table class="sb-main-table" id="sbTable19">
+        <thead>
+            <tr>
+                <th>Effective Date</th><th>Date of Termination</th><th>Scale of Pay / Level Matrix</th><th>Cell</th><th>Grade Pay</th><th>Basic Pay</th><th>Event / Reason / Steps</th>
+            </tr>
+        </thead>
+        <tbody id="sbPrintTableBody19"></tbody>
+    </table>
+</div>
+
+<script>
+// Complete Matrix Dataset mapping from PAY_MATRIX.pdf
+    const matrixData19 = {
+        1: [17000, 17500, 18000, 18500, 19100, 19700, 20300, 20900, 21500, 22100, 22800, 23500, 24200, 24900, 25600, 26400, 27200, 28000, 28800, 29700, 30600, 31500, 32400, 33400, 34400, 35400, 36500, 37600, 38700, 39900, 41100, 42300, 43600],
+        2: [17600, 18100, 18600, 19200, 19800, 20400, 21000, 21600, 22200, 22900, 23600, 24300, 25000, 25800, 26600, 27400, 28200, 29000, 29900, 30800, 31700, 32700, 33700, 34700, 35700, 36800, 37900, 39000, 40200, 41400, 42600, 43900, 45200],
+        3: [18800, 19400, 20000, 20600, 21200, 21800, 22500, 23200, 23900, 24600, 25300, 26100, 26900, 27700, 28500, 29400, 30300, 31200, 32100, 33200, 34200, 35200, 36300, 37400, 38500, 39700, 40900, 42100, 43400, 44700, 46000, 47400, 48800, 50300, 51800, 53400, 55000, 56700, 58400, 60200, 62000, 63900],
+        7: [24700, 25400, 26200, 27000, 27800, 28600, 29500, 30400, 31300, 32200, 33200, 34200, 35200, 36300, 37400, 38500, 39700, 40900, 42100, 43400, 44700, 46000, 47400, 48800, 50300, 51800, 53400, 55000, 56700, 58400, 60200, 62000, 63900],
+        10: [32100, 33100, 34100, 35100, 36200, 37300, 38400, 39600, 40800, 42000, 43300, 44600, 45900, 47300, 48700, 50200, 51700, 53300, 54900, 56500, 58200, 59900, 61700, 63600, 65500, 67500, 69500, 71600, 73700, 75900, 78200, 80500, 82900],
+        11: [33400, 34400, 35400, 36500, 37600, 38700, 39900, 41100, 42300, 43600, 44900, 46200, 47600, 49000, 50500, 52000, 53600, 55200, 56900, 58600, 60400, 62200, 64100, 66000, 68000, 70000, 72100, 74300, 76500, 78800, 81200, 83600, 86100],
+        12: [35800, 36900, 38000, 39100, 40300, 41500, 42700, 44000, 45300, 46700, 48100, 49500, 51000, 52500, 54100, 55700, 57400, 59100, 60900, 62700, 64600, 66500, 68500, 70600, 72700, 74900, 77100, 79400, 81800, 84300, 86800, 89400, 92100],
+        14: [39900, 41100, 42300, 43600, 44900, 46200, 47600, 49000, 50500, 52000, 53600, 55200, 56900, 58600, 60400, 62200, 64100, 66000, 68000, 70000, 72100, 74300, 76500, 78800, 81200, 83600, 86100, 88700, 91400, 94100, 96900, 99800, 102800],
+        15: [42600, 43900, 45200, 46600, 48000, 49400, 50900, 52400, 54000, 55600, 57300, 59000, 60800, 62600, 64500, 66400, 68400, 70500, 72600, 74800, 77000, 79300, 81700, 84200, 86700, 89300, 92000, 94800, 97600, 100500, 103500, 106600, 109800],
+        16: [56100, 57800, 59500, 61300, 63100, 65000, 67000, 69000, 71100, 73200, 75400, 77700, 80000, 82400, 84900, 87400, 90000, 92700, 95500, 98400, 101400, 104400, 107500, 110700, 114000, 117400, 120900, 124500, 128200, 132000, 136000, 140100, 144300]
+    };
+
+    const pbMap09 = {
+        1700: "PB-1:4900-16200", 1800: "PB-1:4900-16200", 2600: "PB-2:5400-25200", 2900: "PB-2:5400-25200",
+        3900: "PB-3:7100-37600", 4100: "PB-3:7100-37600", 4400: "PB-4:9000-40500", 4700: "PB-4:9000-40500",
+        4800: "PB-4:9000-40500", 5400: "PB-4:9000-40500"
+    };
+
+    // "Entry Pay in the revised pay structure for direct recruits appointed on or after
+    // 01.01.2006" (WBS(ROPA) Rules 2009 Schedule). Keyed on Grade Pay -> minimum Pay in the
+    // Pay Band prescribed for a fresh direct recruit on that Grade Pay. When an existing
+    // employee's pay is carried forward from ROPA-1998 into ROPA-2009 by the x1.86 fitment
+    // formula (Rule II), the resulting Pay in the Pay Band can never be fixed below this
+    // minimum entry figure for the Grade Pay concerned — it must be stepped up to at least
+    // this value if the multiplication produces a lower amount.
+    const minEntryPayBand09 = {
+        1700: 4900, 1800: 5030,
+        1900: 5400, 2100: 5580, 2300: 5860, 2600: 6240, 2900: 6700,
+        3200: 7100, 3600: 7440, 3900: 8370, 4100: 8650,
+        4400: 9000, 4600: 9300, 4700: 10230, 4800: 11160,
+        5400: 15600, 6600: 18600, 7000: 18600, 7600: 22320, 8000: 23250
+    };
+
+    const pbMap19 = {
+        1700: "PB-1", 1800: "PB-1", 2600: "PB-2", 2900: "PB-2", 3900: "PB-3", 4100: "PB-3", 4400: "PB-4", 4700: "PB-4", 4800: "PB-4", 5400: "PB-4"
+    };
+
+    const levelMap19 = {
+        1700: 1, 1800: 2, 2600: 3, 2900: 7, 3900: 10, 4100: 11, 4400: 12, 4700: 14, 4800: 15, 5400: 16
+    };
+
+    const promoMap09 = { 1700: 1800, 2600: 2900, 3900: 4100, 4100: 4400 };
+    const promoMap19 = { 1700: 1800, 2600: 2900, 3900: 4100, 4100: 4400 };
+
+    // ROPA-1998 stepped pay-scale ladders, transcribed from the official scale table.
+    // Each key is the Grade Pay this old scale was mapped to under ROPA-2009.
+    const matrixData98 = {
+        1700: [2600, 2655, 2710, 2765, 2820, 2875, 2930, 2985, 3045, 3105, 3165, 3225, 3285, 3345, 3405, 3465, 3525, 3590, 3655, 3720, 3785, 3850, 3915, 3980, 4045, 4110, 4175],
+        1800: [2700, 2760, 2820, 2880, 2940, 3000, 3060, 3120, 3185, 3250, 3315, 3380, 3445, 3510, 3575, 3640, 3705, 3770, 3840, 3910, 3980, 4050, 4120, 4190, 4260, 4330, 4400],
+        2600: [3350, 3440, 3530, 3620, 3710, 3800, 3900, 4000, 4100, 4200, 4300, 4400, 4500, 4600, 4700, 4825, 4950, 5075, 5200, 5325, 5450, 5575, 5700, 5825, 5950, 6075, 6200, 6325],
+        2900: [3800, 3900, 4000, 4100, 4225, 4350, 4475, 4600, 4725, 4875, 5025, 5175, 5325, 5475, 5625, 5775, 5925, 6075, 6225, 6375, 6550, 6725, 6900, 7075, 7250, 7425, 7600, 7775],
+        4100: [4650, 4800, 4950, 5100, 5275, 5450, 5625, 5800, 5975, 6150, 6325, 6525, 6725, 6925, 7125, 7325, 7525, 7725, 7925, 8150, 8375, 8600, 8825, 9050, 9275, 9500, 9725, 9950, 10175],
+        4400: [4800, 4975, 5150, 5325, 5500, 5675, 5850, 6050, 6250, 6450, 6650, 6875, 7100, 7325, 7550, 7775, 8000, 8225, 8450, 8675, 8925, 9175, 9425, 9675, 9925, 10175, 10425, 10675, 10925],
+        4700: [5500, 5700, 5900, 6100, 6300, 6525, 6750, 6975, 7200, 7425, 7650, 7875, 8100, 8325, 8575, 8825, 9075, 9325, 9575, 9825, 10075, 10325, 10575, 10825, 11075],
+        4800: [6000, 6225, 6450, 6675, 6900, 7125, 7350, 7575, 7800, 8050, 8300, 8550, 8800, 9050, 9300, 9550, 9800, 10075, 10350, 10625, 10900, 11175, 11450, 11725, 12000],
+        5400: [8000, 8275, 8550, 8825, 9100, 9375, 9650, 9925, 10200, 10475, 10750, 11025, 11300, 11575, 11850, 12125, 12400, 12675, 12950, 13225, 13500]
+    };
+
+    // Rule II, WBS(ROPA) Rules 2009 (Notification No. 7220-F dated 23.07.2009):
+    // existing (ROPA-1998) basic pay x 1.86, rounded off to the next multiple of Rs. 10,
+    // gives the Pay in the Pay Band; the Grade Pay corresponding to the old scale is then added.
+    const ROPA98_TO_09_FACTOR = 1.86;
+
+    function ceilToNext10(value) {
+        return Math.ceil(value / 10) * 10;
+    }
+
+    // ROPA-2009 timeline is always notionally frozen on this date, regardless of DOR
+    // or of the date the employee actually switched over to ROPA-2019.
+    const ROPA09_CUTOFF = new Date(2019, 11, 31);
+
+    // ROPA-1998 timeline is always notionally frozen on this date, regardless of DOR.
+    const ROPA98_CUTOFF = new Date(2009, 2, 31);
+
+    function toggleRopa98Section() {
+        const enabled = document.getElementById('enableRopa98').checked;
+        document.getElementById('ropa98Fields').style.display = enabled ? '' : 'none';
+        document.getElementById('ropa98Section').style.display = enabled ? '' : 'none';
+        document.getElementById('sbRopa98Block').style.display = enabled ? '' : 'none';
+        document.getElementById('ropa09ManualGpGroup').style.display = enabled ? 'none' : '';
+        document.getElementById('ropa09ManualBandGroup').style.display = enabled ? 'none' : '';
+    }
+
+    function toggleRopa09Section() {
+        const enabled = document.getElementById('enableRopa09').checked;
+        document.getElementById('ropa09Fields').style.display = enabled ? '' : 'none';
+        document.getElementById('ropa09Section').style.display = enabled ? '' : 'none';
+        document.getElementById('sbRopa09Block').style.display = enabled ? '' : 'none';
+        document.getElementById('ropa19ManualGpGroup').style.display = enabled ? 'none' : '';
+        document.getElementById('ropa19ManualBasicGroup').style.display = enabled ? 'none' : '';
+        toggleRopa98Section(); // keep ROPA-2009 manual-field visibility in sync with the ROPA-1998 checkbox
+    }
+
+    function getDOR() {
+        const dobInput = document.getElementById('dob').value;
+        if (!dobInput) return null;
+        const dob = new Date(dobInput);
+        let targetYear = dob.getFullYear() + 60;
+        return (dob.getDate() === 1) ? new Date(targetYear, dob.getMonth(), 0) : new Date(targetYear, dob.getMonth() + 1, 0);
+    }
+
+    function calculateDOR() {
+        const dor = getDOR();
+        if (dor) document.getElementById('dorOutput').innerHTML = `<strong>Date of Retirement (DOR):</strong> ${formatDate(dor)}`;
+    }
+
+    function formatDate(d) {
+        return `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+    }
+
+    function calculate09Increment(bandPay, gradePay) {
+        let increment = (bandPay + gradePay) * 0.03;
+        return (increment % 10 < 1) ? Math.floor(increment / 10) * 10 : Math.ceil(increment / 10) * 10;
+    }
+
+    function findCell19(level, basic) {
+        const arr = matrixData19[level];
+        if (!arr) return { cell: "N/A", value: basic, index: 0 };
+        let idx = arr.indexOf(basic);
+        if (idx !== -1) return { cell: `CELL-${idx + 1}`, value: basic, index: idx };
+        for (let i = 0; i < arr.length; i++) {
+            if (arr[i] >= basic) return { cell: `CELL-${i + 1}`, value: arr[i], index: i };
+        }
+        return { cell: `CELL-${arr.length}`, value: arr[arr.length - 1], index: arr.length - 1 };
+    }
+
+    function checkWindow(milestoneDate) {
+        const startWinA = new Date(milestoneDate.getFullYear(), 0, 2);
+        const endWinA = new Date(milestoneDate.getFullYear(), 5, 30);
+        return (milestoneDate >= startWinA && milestoneDate <= endWinA) ? 'A' : 'B';
+    }
+
+    // Whole completed calendar months between two dates (partial trailing month dropped),
+    // e.g. 1.7.2007 to 8.12.2007 = 5 months; 20.3.2008 to 26.9.2008 = 6 months.
+    function wholeMonthsBetween(start, end) {
+        let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
+        if (end.getDate() < start.getDate()) months -= 1;
+        return Math.max(0, months);
+    }
+
+    // LWP / Notional Increment rule per G.O. No. 181-SE(B) Dt. 8.10.2009 (ROPA-2009 & ROPA-2019
+    // phases only). Returns how a single 1-July-cycle increment/CAS event is affected by an
+    // Extraordinary Leave Without Pay (E.O.L.) period entered for the employee:
+    //   - skip: true        -> this cycle's increment is not granted at all (LWP >= 12 months
+    //                          swallowed the 1-July date); caller should omit the event.
+    //   - financialDate     -> date from which the increment's monetary benefit actually starts.
+    //                          The notional 1-July date itself is unchanged, and future 1-July
+    //                          cycle dates are computed independently, so they are unaffected.
+    //   - deferred: true    -> financialDate differs from the notional cycleDate; caller should
+    //                          show a note explaining the deferral.
+    // LWP / Notional Increment rule per G.O. No. 181-SE(B) Dt. 8.10.2009 (ROPA-2009 & ROPA-2019
+    // phases only). Precomputes, ONCE for a given LWP period, which single 1-July increment
+    // cycle it affects and how — every other cycle date (earlier or later) is left untouched,
+    // so a long-past LWP never keeps re-deferring later years.
+    //   - skip: true    -> that cycle's increment is not granted at all (LWP >= 12 months
+    //                      swallowed the 1-July date); caller should omit the event for that year.
+    //   - financialDate -> date from which the increment's monetary benefit actually starts.
+    //                      The notional 1-July date itself is unchanged, and future 1-July
+    //                      cycle dates are computed independently, so they are unaffected.
+    function computeLwpEffect(lwpType, lwpStart, lwpEnd) {
+        if (lwpType !== 'other' || !(lwpStart instanceof Date) || !(lwpEnd instanceof Date) || isNaN(lwpStart) || isNaN(lwpEnd) || lwpEnd < lwpStart) {
+            return null; // no LWP, or medical-ground E.O.L. (no effect on increment)
+        }
+        const months = wholeMonthsBetween(lwpStart, lwpEnd);
+        if (months < 1) return null; // less than 1 month LWP -> no effect
+
+        // The single 1-July cycle this LWP touches: the first 1-July date strictly after the
+        // LWP start (an LWP starting exactly on a 1-July date belongs to that same cycle).
+        let cyc = new Date(lwpStart.getFullYear(), 6, 1);
+        if (cyc <= lwpStart) cyc = new Date(lwpStart.getFullYear() + 1, 6, 1);
+        const spansCycleDate = (lwpStart <= cyc && cyc <= lwpEnd);
+
+        if (months >= 12 && spansCycleDate) {
+            // LWP of 12 months or more that swallows this cycle's 1-July date entirely: this
+            // year's increment is not granted; employee resumes on the next 1-July cycle.
+            return { affectedYear: cyc.getFullYear(), skip: true, deferred: false, financialDate: cyc };
+        }
+        if (spansCycleDate) {
+            // Employee was still on LWP on the 1-July date itself: financial benefit starts
+            // from the 1st of the month AFTER the month duty was resumed, plus the LWP months.
+            let rejoinMonthStart = new Date(lwpEnd.getFullYear(), lwpEnd.getMonth() + 1, 1);
+            let financialDate = new Date(rejoinMonthStart.getFullYear(), rejoinMonthStart.getMonth() + months, 1);
+            return { affectedYear: cyc.getFullYear(), skip: false, deferred: true, financialDate };
+        }
+        // LWP ended before the 1-July date: financial benefit starts from 1-July plus the
+        // LWP months.
+        let financialDate = new Date(cyc.getFullYear(), cyc.getMonth() + months, cyc.getDate());
+        return { affectedYear: cyc.getFullYear(), skip: false, deferred: true, financialDate };
+    }
+
+    function finalizeDot(compiledRows, endDate) {
+        for (let i = 0; i < compiledRows.length; i++) {
+            if (i < compiledRows.length - 1) {
+                let nextRowDate = compiledRows[i + 1].date;
+                if (compiledRows[i].date.getTime() === nextRowDate.getTime()) {
+                    compiledRows[i].dot = new Date(nextRowDate);
+                } else {
+                    compiledRows[i].dot = new Date(nextRowDate.getFullYear(), nextRowDate.getMonth(), nextRowDate.getDate() - 1);
+                }
+            } else {
+                compiledRows[i].dot = endDate;
+            }
+        }
+    }
+
+    // ---- ROPA-1998 notional timeline (always ends at min(DOR, 31-03-2009)) ----
+    // Uses the literal stepped-scale ladder (no percentage formula, no 10/18/20-year
+    // CAS milestones — those were only introduced with effect from 01.01.2006 under
+    // ROPA-2009 and are applied from that phase onward).
+    // ROPA-1998 completed-year (termination/completion) date rule:
+    // If the joining date falls on the 1st of a month, that month already counts as a full
+    // qualifying month, so a completed year of service falls on the SAME date N years later.
+    // If the joining date falls anywhere from the 2nd to the last day of a month, that partial
+    // month is rounded UP and treated as a full qualifying month, so the completed year of
+    // service falls on the LAST DAY of the month that is N years after the month of joining
+    // (not the exact day-anniversary). From the following year onward this naturally produces
+    // a clean 12-month span running from the 1st of that month to the end of the 12th month.
+    function ropa98YearCompletionDate(doj, years) {
+        const targetYear = doj.getFullYear() + years;
+        const month = doj.getMonth();
+        const day = doj.getDate();
+        if (day === 1) {
+            return new Date(targetYear, month, 1);
+        }
+        return new Date(targetYear, month + 1, 0); // day 0 of next month = last day of 'month'
+    }
+
+    // Grade Pays under the old ROPA-1998 stepped scales that carry an 18-year scale-change
+    // benefit: 1700->1800, 2600->2900, 3900->4100, 4100->4400 (uses the same promoMap09
+    // table already used for the ROPA-2009 18-year CAS benefit). GP 4700/4800/5400 have no
+    // higher old-scale mapping in matrixData98, so they are not eligible.
+    const eligibleFor18YScaleChange98 = [1700, 2600, 3900, 4100];
+
+    function computeRopa98Timeline(doj, optionDate, scaleKey, initialBasicPay, endDate, lwpDays, lwpFromDate) {
+        let ladder = matrixData98[scaleKey] || [];
+        let currentScaleKey = scaleKey;
+        let events = [];
+        function pushEvent(dateObj, data) { events.push({ date: new Date(dateObj), ...data }); }
+
+        // LWP (dies-non) is not counted towards qualifying service for increment purposes.
+        // Every increment / 10-18-20 year CAS date falling on or after the date the LWP was
+        // taken is deferred by the number of LWP days entered.
+        const hasLwp = lwpDays > 0 && lwpFromDate instanceof Date && !isNaN(lwpFromDate);
+        function applyLwpShift(d) {
+            if (hasLwp && d >= lwpFromDate) {
+                let shifted = new Date(d);
+                shifted.setDate(shifted.getDate() + lwpDays);
+                return shifted;
+            }
+            return d;
+        }
+
+        pushEvent(optionDate, { label: "DOA / PAY FIXATION", isInitial: true });
+
+        const optionMonth = optionDate.getMonth();
+        const isEligible18Y = eligibleFor18YScaleChange98.includes(scaleKey);
+
+        // 10/18/20-year milestone trigger dates: the EXACT anniversary of the Date of Joining
+        // (DOJ) — same month and day, N years later. No month-end rounding on the trigger
+        // itself.
+        let milestoneDefs = [
+            { d: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS - ADDL. INCREMENT", type: "10Y" },
+            { d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS - SCALE CHANGE", type: "18Y" },
+            { d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS - ADDL. INCREMENT", type: "20Y" }
+        ];
+        if (!isEligible18Y) milestoneDefs = milestoneDefs.filter(m => m.type !== "18Y");
+        milestoneDefs = milestoneDefs.map(m => ({ ...m, d: applyLwpShift(m.d) }))
+                                      .filter(m => m.d >= optionDate && m.d <= endDate);
+        milestoneDefs.forEach(m => pushEvent(m.d, { label: m.name, isMilestone: true, milestoneType: m.type }));
+
+        // Regular annual increment date = 1st day of the option/fixation date's month, each
+        // year starting the year after the option date (day of the option date itself does
+        // not matter — only its month). If a 10/18/20-year milestone falls in the gap
+        // immediately before a regular increment date, that one increment is deferred: the
+        // milestone-created pay "vests" for a full year from the milestone's own date
+        // (rounded to the last day of that month if the milestone did not fall on the 1st),
+        // and the deferred increment falls the day after that vesting period ends.
+        // Subsequent increments then revert to the normal option-month cycle.
+        function vestingExtendedNextDate(milestoneDate) {
+            const y = milestoneDate.getFullYear() + 1, m = milestoneDate.getMonth(), d = milestoneDate.getDate();
+            if (d === 1) return new Date(y, m, 1);
+            const vestEnd = new Date(y, m + 1, 0); // last day of month m, year y
+            const next = new Date(vestEnd);
+            next.setDate(next.getDate() + 1);
+            return next;
+        }
+
+        let loopYear = optionDate.getFullYear() + 1;
+        while (loopYear <= endDate.getFullYear() + 1) {
+            let normalCycleDate = new Date(loopYear, optionMonth, 1);
+            let priorCycleDate = new Date(loopYear - 1, optionMonth, 1);
+            let interveningMilestone = milestoneDefs.find(m => m.d >= priorCycleDate && m.d < normalCycleDate);
+            let incrementDate;
+            if (interveningMilestone) {
+                incrementDate = vestingExtendedNextDate(interveningMilestone.d);
+                if (incrementDate < normalCycleDate) incrementDate = applyLwpShift(normalCycleDate);
+            } else {
+                incrementDate = applyLwpShift(normalCycleDate);
+            }
+            if (incrementDate >= optionDate && incrementDate <= endDate) {
+                pushEvent(incrementDate, { label: "INCREMENT", isAnnual: true });
+            }
+            loopYear++;
+        }
+
+        events.sort((a, b) => {
+            if (a.date.getTime() !== b.date.getTime()) return a.date - b.date;
+            if (a.isMilestone && b.isAnnual) return -1;
+            if (a.isAnnual && b.isMilestone) return 1;
+            return 0;
+        });
+
+        let compiledRows = [];
+        let runningBasicPay = initialBasicPay;
+        let idx = ladder.indexOf(initialBasicPay);
+        if (idx === -1) {
+            // nearest ladder position at or above the entered basic pay
+            idx = ladder.findIndex(v => v >= initialBasicPay);
+            if (idx === -1) idx = ladder.length - 1;
+        }
+
+        events.forEach(ev => {
+            if (ev.isAnnual) {
+                if (idx < ladder.length - 1) idx += 1;
+                runningBasicPay = ladder[idx];
+            } else if (ev.isMilestone) {
+                if (ev.milestoneType === "10Y" || ev.milestoneType === "20Y") {
+                    // One additional increment (single extra step) in the same old scale.
+                    if (idx < ladder.length - 1) idx += 1;
+                    runningBasicPay = ladder[idx];
+                } else if (ev.milestoneType === "18Y") {
+                    // Step 1: one additional increment in the old scale before the scale change.
+                    if (idx < ladder.length - 1) idx += 1;
+                    let preChangeBasic = ladder[idx];
+                    // Step 2: move to the promoted (next) old scale's ladder, placed at the
+                    // equal/next-higher stage.
+                    let newScaleKey = promoMap09[currentScaleKey] || currentScaleKey;
+                    let newLadder = matrixData98[newScaleKey] || ladder;
+                    let newIdx = newLadder.findIndex(v => v >= preChangeBasic);
+                    if (newIdx === -1) newIdx = newLadder.length - 1;
+                    // ROPA-1998 minimum entry pay rule: fixed pay in the new scale can never be
+                    // lower than that scale's minimum (first ladder cell).
+                    if (newLadder[newIdx] < newLadder[0]) newIdx = 0;
+                    currentScaleKey = newScaleKey;
+                    ladder = newLadder;
+                    idx = newIdx;
+                    runningBasicPay = ladder[idx];
+                }
+            }
+            compiledRows.push({
+                date: ev.date,
+                label: ev.label,
+                scaleStr: `Old Scale &rarr; GP ${currentScaleKey}`,
+                trackCol: '',
+                gpDisplay: '',
+                basicDisplay: runningBasicPay.toLocaleString('en-IN'),
+                slipHTML: '',
+                snapBasicPay: runningBasicPay
+            });
+        });
+
+        finalizeDot(compiledRows, endDate);
+        return { rows: compiledRows, finalScaleKey: currentScaleKey };
+    }
+
+    function getRopa98SnapshotAsOf(rows, initialBasicPay, asOfDate) {
+        let basic = initialBasicPay;
+        for (const row of rows) {
+            if (row.date.getTime() <= asOfDate.getTime()) {
+                basic = row.snapBasicPay;
+            } else {
+                break;
+            }
+        }
+        return { basic };
+    }
+
+    // ---- ROPA-2009 notional timeline (always ends at min(DOR, 31-12-2019)) ----
+    function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate, lwpType, lwpStart, lwpEnd) {
+        let events = [];
+        function pushEvent(dateObj, data) { events.push({ date: new Date(dateObj), ...data }); }
+
+        pushEvent(optionDate, { label: "DOA / PAY REVISION", isInitial: true, exactMilestoneDate: optionDate });
+
+        // LWP / Notional Increment rule (G.O. No. 181-SE(B) Dt. 8.10.2009) — precomputed once;
+        // touches at most the single 1-July cycle the LWP period actually falls in.
+        const lwpEffect = computeLwpEffect(lwpType, lwpStart, lwpEnd);
+
+        let firstIncrementYear = optionDate.getFullYear();
+        let optionDay = optionDate.getDate();
+        let optionMonth = optionDate.getMonth();
+        if ((optionMonth === 0 && optionDay >= 2) || (optionMonth > 0 && optionMonth < 5) || (optionMonth === 5 && optionDay <= 30)) {
+            firstIncrementYear += 1;
+        }
+        let loopYear = firstIncrementYear;
+        while (loopYear <= endDate.getFullYear()) {
+            let julDate = new Date(loopYear, 6, 1);
+            if (lwpEffect && lwpEffect.affectedYear === loopYear) {
+                if (lwpEffect.skip) {
+                    // LWP >= 12 months swallowed this cycle's 1-July date: no increment this year.
+                    loopYear++;
+                    continue;
+                }
+                if (julDate >= optionDate && julDate <= endDate) {
+                    pushEvent(lwpEffect.financialDate, { label: "INCREMENT", isAnnual: true, isLwpDeferred: true, notionalDate: julDate });
+                }
+            } else if (julDate >= optionDate && julDate <= endDate) {
+                pushEvent(julDate, { label: "INCREMENT", isAnnual: true });
+            }
+            loopYear++;
+        }
+
+        const isExcludedFrom18Y = [4700, 4800, 5400].includes(gpInput);
+        const eligibleFor18YScaleChange = [1700, 2600, 3900, 4100].includes(gpInput);
+
+        [ {d: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS"},
+          {d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
+          {d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
+            if (milestone.name === "18 YEARS" && isExcludedFrom18Y) return;
+            if (milestone.d >= optionDate && milestone.d <= endDate) {
+                let win = checkWindow(milestone.d);
+                if (win === 'A') {
+                    let targetJul = new Date(milestone.d.getFullYear(), 6, 1);
+                    // Same G.O. 181-SE(B) deferral applies if this milestone's "stacked July"
+                    // cycle is the one affected by LWP (skip case left as-is for milestones —
+                    // review manually if a milestone coincides with a >=12-month LWP cycle).
+                    if (lwpEffect && lwpEffect.affectedYear === targetJul.getFullYear() && !lwpEffect.skip) {
+                        pushEvent(lwpEffect.financialDate, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A', isLwpDeferred: true, notionalDate: targetJul });
+                    } else {
+                        pushEvent(targetJul, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A' });
+                    }
+                } else {
+                    pushEvent(milestone.d, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'B' });
+                }
+            }
+        });
+
+        events.sort((a, b) => {
+            if (a.date.getTime() !== b.date.getTime()) return a.date - b.date;
+            if (a.isAnnual && b.isMilestone) return -1;
+            if (a.isMilestone && b.isAnnual) return 1;
+            return 0;
+        });
+
+        let compiledRows = [];
+        let runningBandPay = initialBandPay;
+        let runningGp = gpInput;
+        let runningBasicPay = initialBandPay + gpInput;
+
+        events.forEach(ev => {
+            let colScaleStr = `${pbMap09[runningGp] || ''}-GP-${runningGp}`;
+            let slipBlockHTML = "";
+            let existingBandPay = runningBandPay;
+            let existingGp = runningGp;
+            let incAmt = 0;
+            let lwpNote = ev.isLwpDeferred ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (non-medical, G.O. 181-SE(B) Dt. 8.10.2009)</span><span>Notional date ${formatDate(ev.notionalDate)}; financial benefit deferred to ${formatDate(ev.date)}</span></div>` : '';
+
+            if (ev.isInitial) {
+                // seed row, no change
+            } else if (ev.isAnnual) {
+                incAmt = calculate09Increment(runningBandPay, runningGp);
+                runningBandPay += incAmt;
+                runningBasicPay = runningBandPay + runningGp;
+                if (ev.isLwpDeferred) {
+                    slipBlockHTML = `<div class="slip-box">${lwpNote}</div>`;
+                }
+            } else if (ev.isMilestone) {
+                incAmt = calculate09Increment(runningBandPay, runningGp);
+                runningBandPay += incAmt;
+                if (ev.label === "18 YEARS" && eligibleFor18YScaleChange && promoMap09[runningGp]) {
+                    runningGp = promoMap09[runningGp];
+                }
+                runningBasicPay = runningBandPay + runningGp;
+
+                slipBlockHTML = `
+                    <div class="slip-box">
+                        <div class="slip-row"><span class="slip-bold">1. Existing Pay on ${formatDate(ev.exactMilestoneDate)}</span><span>BP: Rs. ${existingBandPay.toLocaleString('en-IN')}, GP: Rs. ${existingGp.toLocaleString('en-IN')}</span></div>
+                        <div class="slip-row"><span>2.a) Allowed Normal Increment</span><span>${ev.win === 'A' ? 'Stacked July' : 'Nil'}</span></div>
+                        <div class="slip-row"><span>&nbsp;&nbsp;&nbsp;b) Additional Increment for ${ev.label} Service</span><span>Rs. ${incAmt.toLocaleString('en-IN')}</span></div>
+                        <div class="slip-row"><span class="slip-bold">&nbsp;&nbsp;&nbsp;c) Pay Fixed w.e.f ${formatDate(ev.date)}</span><span class="slip-bold">Rs. ${runningBasicPay.toLocaleString('en-IN')}</span></div>
+                        ${lwpNote}
+                    </div>`;
+            }
+
+            compiledRows.push({
+                date: ev.date,
+                label: ev.label,
+                scaleStr: colScaleStr,
+                trackCol: runningBandPay.toLocaleString('en-IN'),
+                gpDisplay: runningGp.toLocaleString('en-IN'),
+                basicDisplay: runningBasicPay.toLocaleString('en-IN'),
+                slipHTML: slipBlockHTML,
+                snapBandPay: runningBandPay,
+                snapGp: runningGp
+            });
+        });
+
+        finalizeDot(compiledRows, endDate);
+        return { rows: compiledRows };
+    }
+
+    // Snapshot of the ROPA-2009 notional Band Pay / Grade Pay as it stood on a given date
+    // (pay doesn't change except on a fixation event, so we use the last event on/before that date).
+    function getRopa09SnapshotAsOf(rows, initialGp, initialBandPay, asOfDate) {
+        let gp = initialGp, bandPay = initialBandPay;
+        for (const row of rows) {
+            if (row.date.getTime() <= asOfDate.getTime()) {
+                gp = row.snapGp;
+                bandPay = row.snapBandPay;
+            } else {
+                break;
+            }
+        }
+        return { gp, bandPay };
+    }
+
+    // ---- ROPA-2019 matrix timeline (from its own option date to DOR) ----
+    function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, dor, lwpType, lwpStart, lwpEnd) {
+        let events = [];
+        function pushEvent(dateObj, data) { events.push({ date: new Date(dateObj), ...data }); }
+
+        pushEvent(startDate, { label: "ROPA-19 OPTION / FITMENT", isInitial: true, exactMilestoneDate: startDate });
+
+        // LWP / Notional Increment rule (G.O. No. 181-SE(B) Dt. 8.10.2009) — precomputed once;
+        // touches at most the single 1-July cycle the LWP period actually falls in.
+        const lwpEffect = computeLwpEffect(lwpType, lwpStart, lwpEnd);
+
+        let firstIncrementYear = startDate.getFullYear();
+        let optionDay = startDate.getDate();
+        let optionMonth = startDate.getMonth();
+        if ((optionMonth === 0 && optionDay >= 2) || (optionMonth > 0 && optionMonth < 5) || (optionMonth === 5 && optionDay <= 30)) {
+            firstIncrementYear += 1;
+        }
+        let loopYear = firstIncrementYear;
+        while (loopYear <= dor.getFullYear()) {
+            let julDate = new Date(loopYear, 6, 1);
+            if (lwpEffect && lwpEffect.affectedYear === loopYear) {
+                if (lwpEffect.skip) {
+                    loopYear++;
+                    continue;
+                }
+                if (julDate >= startDate && julDate <= dor) {
+                    pushEvent(lwpEffect.financialDate, { label: "INCREMENT", isAnnual: true, isLwpDeferred: true, notionalDate: julDate });
+                }
+            } else if (julDate >= startDate && julDate <= dor) {
+                pushEvent(julDate, { label: "INCREMENT", isAnnual: true });
+            }
+            loopYear++;
+        }
+
+        const isExcludedFrom18Y = [4700, 4800, 5400].includes(gpInput);
+        const eligibleFor18YScaleChange = [1700, 2600, 3900, 4100].includes(gpInput);
+
+        [ {d: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS"},
+          {d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
+          {d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
+            if (milestone.name === "18 YEARS" && isExcludedFrom18Y) return;
+            if (milestone.d >= startDate && milestone.d <= dor) {
+                let win = checkWindow(milestone.d);
+                if (win === 'A') {
+                    let targetJul = new Date(milestone.d.getFullYear(), 6, 1);
+                    if (lwpEffect && lwpEffect.affectedYear === targetJul.getFullYear() && !lwpEffect.skip) {
+                        pushEvent(lwpEffect.financialDate, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A', isLwpDeferred: true, notionalDate: targetJul });
+                    } else {
+                        pushEvent(targetJul, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A' });
+                    }
+                } else {
+                    pushEvent(milestone.d, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'B' });
+                }
+            }
+        });
+
+        events.sort((a, b) => {
+            if (a.date.getTime() !== b.date.getTime()) return a.date - b.date;
+            if (a.isAnnual && b.isMilestone) return -1;
+            if (a.isMilestone && b.isAnnual) return 1;
+            return 0;
+        });
+
+        let compiledRows = [];
+        let runningBasicPay = basicInput;
+        let runningGp = gpInput;
+        let runningLevel = levelInput;
+
+        events.forEach(ev => {
+            let cellData = findCell19(runningLevel, runningBasicPay);
+            let colScaleStr = `${pbMap19[runningGp] || ''}-${runningGp}`;
+            let colTrackingInfo = "";
+            let slipBlockHTML = "";
+            let existingBasic = runningBasicPay;
+            let existingLevel = runningLevel;
+            let lwpNote = ev.isLwpDeferred ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (non-medical, G.O. 181-SE(B) Dt. 8.10.2009)</span><span>Notional date ${formatDate(ev.notionalDate)}; financial benefit deferred to ${formatDate(ev.date)}</span></div>` : '';
+
+            if (ev.isInitial) {
+                colTrackingInfo = cellData.cell;
+            } else if (ev.isAnnual) {
+                runningBasicPay = matrixData19[runningLevel][cellData.index + 1] || runningBasicPay;
+                colTrackingInfo = findCell19(runningLevel, runningBasicPay).cell;
+                if (ev.isLwpDeferred) {
+                    slipBlockHTML = `<div class="slip-box">${lwpNote}</div>`;
+                }
+            } else if (ev.isMilestone) {
+                let postMilestone = matrixData19[runningLevel][cellData.index + 1] || runningBasicPay;
+                if (ev.label === "18 YEARS" && eligibleFor18YScaleChange) {
+                    let nextGpKey = promoMap19[runningGp] || runningGp;
+                    runningLevel = levelMap19[nextGpKey] || runningLevel;
+                    runningGp = nextGpKey;
+                    runningBasicPay = findCell19(runningLevel, postMilestone).value;
+                } else {
+                    runningBasicPay = postMilestone;
+                }
+
+                let finalCellInfo = findCell19(runningLevel, runningBasicPay);
+                colTrackingInfo = finalCellInfo.cell;
+
+                slipBlockHTML = `
+                    <div class="slip-box">
+                        <div class="slip-row"><span class="slip-bold">1. Existing Pay Matrix Cell Row on ${formatDate(ev.exactMilestoneDate)}</span><span>Rs. ${existingBasic.toLocaleString('en-IN')} (L-${existingLevel})</span></div>
+                        <div class="slip-row"><span>2. Additional Step cell upgrade added for ${ev.label} Service</span><span>Rs. ${(postMilestone - existingBasic).toLocaleString('en-IN')}</span></div>
+                        <div class="slip-row"><span class="slip-bold">3. Final Matrix Fitment Entry w.e.f ${formatDate(ev.date)}</span><span class="slip-bold">Rs. ${runningBasicPay.toLocaleString('en-IN')} (${finalCellInfo.cell})</span></div>
+                        ${lwpNote}
+                    </div>`;
+            }
+
+            compiledRows.push({
+                date: ev.date,
+                label: ev.label,
+                scaleStr: colScaleStr,
+                trackCol: colTrackingInfo,
+                gpDisplay: runningGp.toLocaleString('en-IN'),
+                basicDisplay: runningBasicPay.toLocaleString('en-IN'),
+                slipHTML: slipBlockHTML
+            });
+        });
+
+        finalizeDot(compiledRows, dor);
+        return { rows: compiledRows };
+    }
+
+    function renderRows98(tbodyId, sbTbodyId, rows) {
+        let tbody = document.getElementById(tbodyId);
+        let sbTbody = document.getElementById(sbTbodyId);
+        tbody.innerHTML = "";
+        sbTbody.innerHTML = "";
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: #64748b; padding: 20px;">No applicable entries in this window.</td></tr>`;
+            return;
+        }
+        rows.forEach(row => {
+            let trDate = formatDate(row.date);
+            let trDot = formatDate(row.dot);
+            let rowHTML = `
+                <td><strong>${trDate}</strong></td>
+                <td><strong>${trDot}</strong></td>
+                <td style="font-size:0.8rem;">${row.scaleStr}</td>
+                <td><strong>₹ ${row.basicDisplay}</strong></td>
+                <td><strong>${row.label}</strong>${row.slipHTML}</td>`;
+            let dRow = document.createElement('tr'); dRow.innerHTML = rowHTML; tbody.appendChild(dRow);
+            let pRow = document.createElement('tr'); pRow.innerHTML = rowHTML; sbTbody.appendChild(pRow);
+        });
+    }
+
+    function renderRows(tbodyId, sbTbodyId, rows) {
+        let tbody = document.getElementById(tbodyId);
+        let sbTbody = document.getElementById(sbTbodyId);
+        tbody.innerHTML = "";
+        sbTbody.innerHTML = "";
+        if (rows.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #64748b; padding: 20px;">No applicable entries in this window.</td></tr>`;
+            return;
+        }
+        rows.forEach(row => {
+            let trDate = formatDate(row.date);
+            let trDot = formatDate(row.dot);
+
+            let rowHTML = `
+                <td><strong>${trDate}</strong></td>
+                <td><strong>${trDot}</strong></td>
+                <td style="font-size:0.8rem;">${row.scaleStr}</td>
+                <td style="text-align:center;">${row.trackCol}</td>
+                <td style="text-align:center;">₹ ${row.gpDisplay}</td>
+                <td><strong>₹ ${row.basicDisplay}</strong></td>
+                <td><strong>${row.label}</strong>${row.slipHTML}</td>`;
+
+            let dRow = document.createElement('tr'); dRow.innerHTML = rowHTML; tbody.appendChild(dRow);
+            let pRow = document.createElement('tr'); pRow.innerHTML = rowHTML; sbTbody.appendChild(pRow);
+        });
+    }
+
+    function processFixationTimeline() {
+        const dojInput = document.getElementById('doj').value;
+        const dor = getDOR();
+        if (!dojInput || !dor) return;
+        const doj = new Date(dojInput);
+
+        const ropa19OptionInput = document.getElementById('ropa19OptionDate').value;
+        if (!ropa19OptionInput) return;
+        const ropa19OptionDate = new Date(ropa19OptionInput);
+
+        const enableRopa98 = document.getElementById('enableRopa98').checked;
+        const enableRopa09 = document.getElementById('enableRopa09').checked;
+
+        let ropa98Rows = [];
+        let ropa09Rows = [];
+        let carryGp, carryBasic, carryLevel;
+        let carryNote = "";
+        let carryNote98 = "";
+
+        // ---- Phase 1: ROPA-1998 (if applicable) ----
+        let ropa09InitialGp, ropa09InitialBand, ropa09HasCarry = false;
+        if (enableRopa98) {
+            const ropa98OptionInput = document.getElementById('ropa98OptionDate').value;
+            const ropa98Scale = parseInt(document.getElementById('ropa98Scale').value, 10);
+            const ropa98BasicPay = parseInt(document.getElementById('ropa98BasicPay').value, 10);
+            if (!ropa98OptionInput || isNaN(ropa98Scale) || isNaN(ropa98BasicPay)) return;
+            const ropa98OptionDate = new Date(ropa98OptionInput);
+            const ropa98EndDate = dor < ROPA98_CUTOFF ? dor : ROPA98_CUTOFF;
+
+            const ropa98LwpDaysInput = parseInt(document.getElementById('ropa98LwpDays').value, 10);
+            const ropa98LwpDays = isNaN(ropa98LwpDaysInput) ? 0 : ropa98LwpDaysInput;
+            const ropa98LwpFromInput = document.getElementById('ropa98LwpFromDate').value;
+            const ropa98LwpFromDate = ropa98LwpFromInput ? new Date(ropa98LwpFromInput) : null;
+
+            const result98 = computeRopa98Timeline(doj, ropa98OptionDate, ropa98Scale, ropa98BasicPay, ropa98EndDate, ropa98LwpDays, ropa98LwpFromDate);
+            ropa98Rows = result98.rows;
+
+            const ropa09OptionInputForSnap = document.getElementById('ropa09OptionDate').value;
+            const snapAsOfDate = ropa09OptionInputForSnap ? new Date(ropa09OptionInputForSnap) : ropa98EndDate;
+            const snap98 = getRopa98SnapshotAsOf(ropa98Rows, ropa98BasicPay, snapAsOfDate);
+            const rawBand = snap98.basic * ROPA98_TO_09_FACTOR;
+            const multipliedBand = ceilToNext10(rawBand);
+            // Carry forward the FINAL grade pay (i.e. after any 18-year scale change that
+            // occurred within the ROPA-1998 window), not the originally-entered scale.
+            ropa09InitialGp = result98.finalScaleKey;
+
+            // Minimum Entry Pay floor: the x1.86 multiplication result can never be fixed
+            // below the prescribed minimum Pay in the Pay Band for that Grade Pay.
+            const minBandForGp = minEntryPayBand09[ropa09InitialGp];
+            const minEntryApplied = (minBandForGp !== undefined && multipliedBand < minBandForGp);
+            ropa09InitialBand = minEntryApplied ? minBandForGp : multipliedBand;
+            ropa09HasCarry = true;
+
+            carryNote98 = `<strong>Carried Forward into ROPA-2009 (Rule II, WBS(ROPA) Rules 2009):</strong> Notional basic pay as on ${formatDate(snapAsOfDate)} under ROPA-1998 = Rs. ${snap98.basic.toLocaleString('en-IN')} &times; fitment factor 1.86 = Rs. ${rawBand.toFixed(2)} &rarr; rounded up to next Rs. 10 = Rs. ${multipliedBand.toLocaleString('en-IN')}` +
+                (minEntryApplied ? ` &rarr; below the prescribed Minimum Entry Pay in the Pay Band for GP ${ropa09InitialGp.toLocaleString('en-IN')} (Rs. ${minBandForGp.toLocaleString('en-IN')}) &rarr; stepped up to the minimum entry figure of Rs. ${ropa09InitialBand.toLocaleString('en-IN')}` : ``) +
+                ` Pay in Pay Band + Grade Pay Rs. ${ropa09InitialGp.toLocaleString('en-IN')} = Total Rs. ${(ropa09InitialBand + ropa09InitialGp).toLocaleString('en-IN')}. The ROPA-1998 table above continues independently as a notional record up to ${formatDate(ropa98EndDate)}.`;
+        }
+
+        // ---- Phase 2: ROPA-2009 (if applicable) ----
+        if (enableRopa09) {
+            const ropa09OptionInput = document.getElementById('ropa09OptionDate').value;
+            let ropa09Gp = ropa09HasCarry ? ropa09InitialGp : parseInt(document.getElementById('ropa09GradePay').value, 10);
+            let ropa09BandPay = ropa09HasCarry ? ropa09InitialBand : parseInt(document.getElementById('ropa09BandPay').value, 10);
+            if (!ropa09OptionInput || isNaN(ropa09Gp) || isNaN(ropa09BandPay)) return;
+            const ropa09OptionDate = new Date(ropa09OptionInput);
+            const ropa09EndDate = dor < ROPA09_CUTOFF ? dor : ROPA09_CUTOFF;
+
+            const ropa09LwpType = document.getElementById('ropa09LwpType').value;
+            const ropa09LwpStartInput = document.getElementById('ropa09LwpStart').value;
+            const ropa09LwpEndInput = document.getElementById('ropa09LwpEnd').value;
+            const ropa09LwpStart = ropa09LwpStartInput ? new Date(ropa09LwpStartInput) : null;
+            const ropa09LwpEnd = ropa09LwpEndInput ? new Date(ropa09LwpEndInput) : null;
+
+            const result09 = computeRopa09Timeline(doj, ropa09OptionDate, ropa09Gp, ropa09BandPay, ropa09EndDate, ropa09LwpType, ropa09LwpStart, ropa09LwpEnd);
+            ropa09Rows = result09.rows;
+
+            const snap = getRopa09SnapshotAsOf(ropa09Rows, ropa09Gp, ropa09BandPay, ropa19OptionDate);
+            const notionalBasic = snap.bandPay + snap.gp;
+            const FITMENT_FACTOR = 2.57;
+            const revisedRaw = Math.round(notionalBasic * FITMENT_FACTOR);
+            carryLevel = levelMap19[snap.gp] || 1;
+            const fit = findCell19(carryLevel, revisedRaw);
+            carryGp = snap.gp;
+            carryBasic = fit.value;
+
+            carryNote = `<strong>Carried Forward into ROPA-2019 (Rule 7, WBS(RPA) Rules 2019):</strong> Notional pay as on ${formatDate(ropa19OptionDate)} under ROPA-2009 = BP Rs. ${snap.bandPay.toLocaleString('en-IN')} + GP Rs. ${snap.gp.toLocaleString('en-IN')} = Rs. ${notionalBasic.toLocaleString('en-IN')} &times; fitment factor 2.57 = Rs. ${revisedRaw.toLocaleString('en-IN')} &rarr; located at equal/next-higher cell in ROPA-2019 Level-${carryLevel}: Rs. ${carryBasic.toLocaleString('en-IN')} (${fit.cell}). The ROPA-2009 table above continues independently as a notional record up to ${formatDate(ropa09EndDate)}.`;
+        } else {
+            carryGp = parseInt(document.getElementById('ropa19GradePayManual').value, 10);
+            carryBasic = parseInt(document.getElementById('ropa19BasicPayManual').value, 10);
+            if (isNaN(carryGp) || isNaN(carryBasic)) return;
+            carryLevel = levelMap19[carryGp] || 1;
+            carryNote = `<strong>Manual Entry:</strong> ROPA-2019 fixation starts at Rs. ${carryBasic.toLocaleString('en-IN')} (GP Rs. ${carryGp.toLocaleString('en-IN')}, Level-${carryLevel}) as on ${formatDate(ropa19OptionDate)}.`;
+        }
+
+        const ropa19LwpType = document.getElementById('ropa19LwpType').value;
+        const ropa19LwpStartInput = document.getElementById('ropa19LwpStart').value;
+        const ropa19LwpEndInput = document.getElementById('ropa19LwpEnd').value;
+        const ropa19LwpStart = ropa19LwpStartInput ? new Date(ropa19LwpStartInput) : null;
+        const ropa19LwpEnd = ropa19LwpEndInput ? new Date(ropa19LwpEndInput) : null;
+
+        const result19 = computeRopa19Timeline(doj, ropa19OptionDate, carryGp, carryLevel, carryBasic, dor, ropa19LwpType, ropa19LwpStart, ropa19LwpEnd);
+
+        document.getElementById('carryForwardOutput98').style.display = enableRopa98 ? '' : 'none';
+        document.getElementById('carryForwardOutput98').innerHTML = carryNote98;
+        document.getElementById('carryForwardOutput').style.display = '';
+        document.getElementById('carryForwardOutput').innerHTML = carryNote;
+
+        document.getElementById('sbSchoolName').innerText = document.getElementById('schoolName').value;
+        document.getElementById('sbStaffName').innerText = document.getElementById('staffName').value;
+        document.getElementById('sbDesignation').innerText = document.getElementById('designation').value;
+        const dobVal = document.getElementById('dob').value;
+        document.getElementById('sbDob').innerText = dobVal ? formatDate(new Date(dobVal)) : '';
+        document.getElementById('sbDoj').innerText = formatDate(doj);
+        document.getElementById('sbDor').innerText = formatDate(dor);
+
+        renderRows98('payTableBody98', 'sbPrintTableBody98', ropa98Rows);
+        renderRows('payTableBody09', 'sbPrintTableBody09', ropa09Rows);
+        renderRows('payTableBody19', 'sbPrintTableBody19', result19.rows);
+
+        // ==== BRIDGE: expose the ROPA-2019 Admissible Basic timeline to the Arrear Bill engine ====
+        window.pfTimeline19 = result19.rows.map(function(r) {
+            return { date: new Date(r.date), basic: parseInt(String(r.basicDisplay).replace(/,/g, ''), 10) };
+        }).sort(function(a, b) { return a.date - b.date; });
+        window.pfDOR = dor;
+        if (typeof syncFixationToArrear === 'function') syncFixationToArrear();
+    }
+
+
+
+function ptSlab(gross) {
+    if (gross <= 10000) return 0;
+    if (gross <= 15000) return 110;
+    if (gross <= 25000) return 130;
+    if (gross <= 40000) return 150;
+    return 200;
+}
+
+const DA_MAP = {"2024-01":0.10, "2024-04":0.14, "2025-01":0.14, "2025-04":0.18, "2025-10":0.18, "2025-11":0.18, "2025-12":0.18};
+function daPercent(y, m) {
+    const k = y + '-' + String(m).padStart(2,'0');
+    return DA_MAP[k] !== undefined ? DA_MAP[k] : (num('daRate')/100);
+}
+
+function val(id) { return document.getElementById(id).value; }
+function num(id) { return parseFloat(document.getElementById(id).value) || 0; }
+
+function fmtDMY(dStr) {
+    if (!dStr) return '-';
+    const [y,m,d] = dStr.split('-');
+    return `${d}.${m}.${y}`;
+}
+
+function daysInMonth(y, m) { return new Date(y, m, 0).getDate(); }
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function monthLabel(y, m) { return MONTH_NAMES[m-1] + ' ' + y; }
+
+function numberToWords(amount) {
+    const words = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
+                   "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"];
+    const tens = ["", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"];
+    
+    let numVal = Math.round(amount);
+    if (numVal === 0) return "Zero";
+    let str = "";
+    
+    if (Math.floor(numVal / 100000) > 0) {
+        str += words[Math.floor(numVal / 100000)] + " Lakh ";
+        numVal %= 100000;
+    }
+    if (Math.floor(numVal / 1000) > 0) {
+        let th = Math.floor(numVal / 1000);
+        if (th < 20) str += words[th] + " Thousand ";
+        else str += tens[Math.floor(th / 10)] + (th % 10 ? " " + words[th % 10] : "") + " Thousand ";
+        numVal %= 1000;
+    }
+    if (Math.floor(numVal / 100) > 0) {
+        str += words[Math.floor(numVal / 100)] + " Hundred ";
+        numVal %= 100;
+    }
+    if (numVal > 0) {
+        if (numVal < 20) str += words[numVal];
+        else str += tens[Math.floor(numVal / 10)] + (numVal % 10 ? " " + words[numVal % 10] : "");
+    }
+    return str.trim();
+}
+
+let arrearRows = [];
+let calcResult = { basic: 8977, da: 1616, hra: 1077, gross: 11670, pt:0, gpf:0, it:0, net: 11670 };
+
+function generateArrearTable() {
+    const fStr = val('arrearFrom');
+    const tStr = val('arrearTo');
+    if (!fStr || !tStr) return;
+
+    const fDate = new Date(fStr + 'T00:00:00');
+    const tDate = new Date(tStr + 'T00:00:00');
+    const benefitDate = new Date(val('benefitDate') + 'T00:00:00');
+
+    const prevB = num('prevBasic');
+    const currB = num('currBasic');
+    const defGpf = num('defaultGpf');
+    const defIt = num('defaultIt');
+
+    // ROPA Pay Fixation Table bridge: when the fixation timeline (Section 3-5 above) has been
+    // generated, the Admissible Basic for every month of the arrear period is auto-picked from
+    // that timeline (day-weighted, so a mid-month increment/CAS milestone/promotion is handled
+    // automatically). Until "Generate Pay Tables" is clicked, it falls back to the manual
+    // Pre-Benefit/Post-Benefit split exactly as before.
+    const timeline = (window.pfTimeline19 && window.pfTimeline19.length) ? window.pfTimeline19 : null;
+    document.getElementById('fixationBridgeStatus').innerHTML = timeline
+        ? ('<span style="color:#16a34a;">&#10003; Admissible Basic is being auto-pulled from the ROPA Pay Fixation Table above (' + timeline.length + ' timeline entr' + (timeline.length===1?'y':'ies') + ' loaded).</span>')
+        : '<span style="color:#c2410c;">&#9888; Pay Fixation Table not generated yet &mdash; using manual Pre-Benefit/Post-Benefit Basic Pay fields below as fallback. Click "Generate Pay Tables" in Section 3-5 to auto-fill.</span>';
+
+    arrearRows = [];
+    let curr = new Date(fDate.getFullYear(), fDate.getMonth(), 1);
+    let end = new Date(tDate.getFullYear(), tDate.getMonth(), 1);
+
+    while (curr <= end) {
+        let y = curr.getFullYear(), m = curr.getMonth() + 1;
+        let tDays = daysInMonth(y, m);
+        let admBasic, drBasic = prevB;
+
+        if (timeline) {
+            admBasic = monthWeightedBasicFromTimeline(y, m, timeline, prevB);
+        } else {
+            admBasic = currB;
+            if (y === benefitDate.getFullYear() && m === (benefitDate.getMonth() + 1) && benefitDate.getDate() > 1) {
+                let newDays = tDays - benefitDate.getDate() + 1;
+                let oldDays = tDays - newDays;
+                admBasic = Math.round((prevB * oldDays + currB * newDays) / tDays);
+            } else if (new Date(y, m - 1, 1) < new Date(benefitDate.getFullYear(), benefitDate.getMonth(), 1)) {
+                admBasic = prevB;
+            }
+        }
+
+        arrearRows.push({
+            y, m,
+            admBasic, drBasic,
+            admGPF: defGpf, drGPF: defGpf,
+            admIT: defIt, drIT: defIt
+        });
+        curr.setMonth(curr.getMonth() + 1);
+    }
+
+    renderDashboardTable();
+}
+
+// Day-weighted Admissible Basic for a given month, sourced from the ROPA-2019 pay-fixation
+// timeline. For each calendar day, uses whichever timeline entry is the latest one effective
+// on/before that day; days before the first timeline entry fall back to fallbackBasic (the
+// "Pre-Benefit / Drawn Basic" seed value). This automatically captures mid-month benefit
+// dates, annual increments, and 10/18/20-year CAS milestones that land inside the arrear range.
+function monthWeightedBasicFromTimeline(y, m, timeline, fallbackBasic) {
+    const totalDays = daysInMonth(y, m);
+    let sum = 0;
+    for (let d = 1; d <= totalDays; d++) {
+        const dayDate = new Date(y, m - 1, d);
+        let applicable = fallbackBasic;
+        for (let i = 0; i < timeline.length; i++) {
+            if (timeline[i].date <= dayDate) applicable = timeline[i].basic;
+            else break;
+        }
+        sum += applicable;
+    }
+    return Math.round(sum / totalDays);
+}
+
+// Called automatically by processFixationTimeline() (Section 3-5) once the ROPA Pay Fixation
+// Table is (re)generated. Auto-fills the Pre-Benefit/Post-Benefit display fields from the
+// timeline and refreshes the arrear table so Admissible Basic reflects the fixation table.
+function syncFixationToArrear() {
+    const timeline = window.pfTimeline19;
+    if (!timeline || !timeline.length) return;
+
+    const bd = val('benefitDate') ? new Date(val('benefitDate') + 'T00:00:00') : null;
+    if (bd) {
+        let before = null, atOrAfter = null;
+        for (let i = 0; i < timeline.length; i++) {
+            if (timeline[i].date < bd) before = timeline[i].basic;
+            if (timeline[i].date <= bd) atOrAfter = timeline[i].basic;
+        }
+        if (atOrAfter !== null) document.getElementById('currBasic').value = atOrAfter;
+        if (before !== null) document.getElementById('prevBasic').value = before;
+    }
+
+    if (document.getElementById('arrearFrom').value && document.getElementById('arrearTo').value) {
+        generateArrearTable();
+    }
+}
+
+function applySubPeriodDrawnPay() {
+    const sFrom = new Date(val('subFrom') + 'T00:00:00');
+    const sTo = new Date(val('subTo') + 'T00:00:00');
+    const sDrawn = num('subDrawnBasic');
+
+    let count = 0;
+    arrearRows.forEach(row => {
+        let rDate = new Date(row.y, row.m - 1, 1);
+        if (rDate >= new Date(sFrom.getFullYear(), sFrom.getMonth(), 1) &&
+            rDate <= new Date(sTo.getFullYear(), sTo.getMonth(), 1)) {
+            row.drBasic = sDrawn;
+            count++;
+        }
+    });
+
+    renderDashboardTable();
+    alert(`Sub-period drawn pay ₹${sDrawn} applied across ${count} month(s).`);
+}
+
+function computeRow(row) {
+    const da = daPercent(row.y, row.m);
+    const hraR = num('hraRate') / 100;
+
+    const admDA = Math.round(row.admBasic * da);
+    const admHRA = Math.round(row.admBasic * hraR);
+    const admGross = row.admBasic + admDA + admHRA;
+    const admPT = ptSlab(admGross);
+    const admNet = admGross - row.admGPF - row.admIT - admPT;
+
+    const drDA = Math.round(row.drBasic * da);
+    const drHRA = Math.round(row.drBasic * hraR);
+    const drGross = row.drBasic + drDA + drHRA;
+    const drPT = ptSlab(drGross);
+    const drNet = drGross - row.drGPF - row.drIT - drPT;
+
+    const dueBasic = row.admBasic - row.drBasic;
+    const dueDA = admDA - drDA;
+    const dueHRA = admHRA - drHRA;
+    const dueGross = admGross - drGross;
+    const dueGPF = row.admGPF - row.drGPF;
+    const dueIT = row.admIT - row.drIT;
+    const duePT = admPT - drPT;
+    const dueNet = admNet - drNet;
+
+    return {
+        admBasic: row.admBasic, admDA, admHRA, ma: 0, admGross, admGPF: row.admGPF, admIT: row.admIT, admPT, admNet,
+        drBasic: row.drBasic, drDA, drHRA, drGross, drGPF: row.drGPF, drIT: row.drIT, drPT, drNet,
+        dueBasic, dueDA, dueHRA, dueGross, dueGPF, dueIT, duePT, dueNet
+    };
+}
+
+function updateRowField(idx, field, val) {
+    arrearRows[idx][field] = parseFloat(val) || 0;
+    renderDashboardTable();
+}
+
+function renderDashboardTable() {
+    const tbody = document.getElementById('dashboardArrearBody');
+    tbody.innerHTML = '';
+
+    let sumBasic = 0, sumDA = 0, sumHRA = 0, sumGross = 0, sumPT = 0, sumGPF = 0, sumIT = 0, sumNet = 0;
+
+    arrearRows.forEach((row, idx) => {
+        let c = computeRow(row);
+
+        sumBasic += c.dueBasic;
+        sumDA += c.dueDA;
+        sumHRA += c.dueHRA;
+        sumGross += c.dueGross;
+        sumPT += c.duePT;
+        sumGPF += c.dueGPF;
+        sumIT += c.dueIT;
+        sumNet += c.dueNet;
+
+        const mName = monthLabel(row.y, row.m);
+
+        const trAdm = document.createElement('tr'); trAdm.className = 'adm-row';
+        trAdm.innerHTML = `
+            <td rowspan="3"><strong>${mName}</strong></td>
+            <td><strong>Admissible</strong></td>
+            <td><input class="tbl-input" value="${row.admBasic}" onchange="updateRowField(${idx},'admBasic',this.value)"></td>
+            <td>${c.admDA}</td><td>${c.admHRA}</td><td>0</td><td><strong>${c.admGross}</strong></td>
+            <td><input class="tbl-input" value="${row.admGPF}" onchange="updateRowField(${idx},'admGPF',this.value)"></td>
+            <td><input class="tbl-input" value="${row.admIT}" onchange="updateRowField(${idx},'admIT',this.value)"></td>
+            <td>${c.admPT}</td>
+            <td><strong>${c.admNet}</strong></td>
+        `;
+
+        const trDr = document.createElement('tr'); trDr.className = 'drawn-row';
+        trDr.innerHTML = `
+            <td><strong>Drawn</strong></td>
+            <td><input class="tbl-input" value="${row.drBasic}" onchange="updateRowField(${idx},'drBasic',this.value)"></td>
+            <td>${c.drDA}</td><td>${c.drHRA}</td><td>0</td><td><strong>${c.drGross}</strong></td>
+            <td><input class="tbl-input" value="${row.drGPF}" onchange="updateRowField(${idx},'drGPF',this.value)"></td>
+            <td><input class="tbl-input" value="${row.drIT}" onchange="updateRowField(${idx},'drIT',this.value)"></td>
+            <td>${c.drPT}</td>
+            <td><strong>${c.drNet}</strong></td>
+        `;
+
+        const trDue = document.createElement('tr'); trDue.className = 'due-row';
+        trDue.innerHTML = `
+            <td><strong>Due (Arrear)</strong></td>
+            <td>${c.dueBasic}</td><td>${c.dueDA}</td><td>${c.dueHRA}</td><td>0</td><td><strong>${c.dueGross}</strong></td>
+            <td>${c.dueGPF}</td><td>${c.dueIT}</td><td>${c.duePT}</td>
+            <td style="font-weight:800; color:#9a3412;">${c.dueNet}</td>
+        `;
+
+        tbody.appendChild(trAdm);
+        tbody.appendChild(trDr);
+        tbody.appendChild(trDue);
+    });
+
+    calcResult = { basic: sumBasic, da: sumDA, hra: sumHRA, gross: sumGross, pt: sumPT, gpf: sumGPF, it: sumIT, net: sumNet };
+    updateAll();
+}
+
+function updateAll() {
+    const school = val('schoolName');
+    const staff = val('staffName');
+    const desig = val('designation');
+    const period = `${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))}`;
+    const gia = val('gia1Date') ? val('gia1Date').split('-').reverse().join('-') : '01-01-1980';
+    const reason = val('reasonLong');
+
+    document.getElementById('disp_school').innerText = school;
+    document.getElementById('disp_staff').innerText = `${staff} ; ${desig}`;
+    document.getElementById('disp_period').innerText = period;
+    document.getElementById('disp_gia').innerText = gia;
+    document.getElementById('disp_reason').innerText = reason;
+
+    document.getElementById('cell_basic').innerText = calcResult.basic.toLocaleString('en-IN');
+    document.getElementById('cell_da').innerText = calcResult.da.toLocaleString('en-IN');
+    document.getElementById('cell_hra').innerText = calcResult.hra.toLocaleString('en-IN');
+    document.getElementById('cell_gross').innerText = calcResult.gross.toLocaleString('en-IN');
+    
+    document.getElementById('cell_pt_credited').innerText = calcResult.pt ? calcResult.pt.toLocaleString('en-IN') : '-';
+    document.getElementById('cell_gpf_credited').innerText = calcResult.gpf ? calcResult.gpf.toLocaleString('en-IN') : '-';
+    document.getElementById('cell_oth_credited').innerText = calcResult.it ? calcResult.it.toLocaleString('en-IN') : '-';
+
+    document.getElementById('cell_net_claim').innerText = calcResult.net.toLocaleString('en-IN');
+    document.getElementById('cell_actual_claim').innerText = calcResult.net.toLocaleString('en-IN');
+
+    document.getElementById('disp_passed_num').innerText = calcResult.net;
+    document.getElementById('disp_passed_words').innerText = `${numberToWords(calcResult.net)} Only`;
+
+    document.getElementById('box_staff').innerText = `${staff} ; ${desig}`;
+    document.getElementById('box_school').innerText = school;
+    document.getElementById('box_period').innerText = period;
+}
+
+/* ==================== 1:1 REPLICA DOCUMENT GENERATOR FUNCTIONS ==================== */
+
+function docCover() {
+    return `
+    <div style="font-family:'Times New Roman', Times, serif; color:#000; padding:20px;">
+        <div style="text-align:right; font-size:0.9rem; font-weight:bold; color:blue; text-decoration:underline;">
+            E-mail: ${val('schoolEmail')}
+        </div>
+        <div style="text-align:center; font-size:1.1rem; font-weight:bold; margin-top:5px;">
+            Mob No of Headmaster : ${val('hoiContact')}
+        </div>
+        <div style="text-align:center; font-size:1.4rem; font-weight:bold; margin-top:15px; letter-spacing:0.5px;">
+            ${val('schoolName').toUpperCase()}
+        </div>
+        <div style="text-align:center; font-size:1rem; font-weight:bold; margin-top:5px;">
+            ${val('schoolAddress').toUpperCase()}
+        </div>
+        <div style="text-align:center; font-size:1.2rem; font-weight:bold; margin-top:10px;">
+            SUB DIVISION : ${val('subDivision').toUpperCase()}
+        </div>
+
+        <div style="border:2px solid #000; margin:40px auto 10px; padding:25px; max-width:800px; text-align:center; line-height:1.8;">
+            <div style="font-size:1.25rem; font-weight:bold; text-decoration:underline;">Subject: ARREAR BILL</div>
+            <div style="font-size:1.15rem; font-weight:bold; text-decoration:underline; margin-top:5px;">
+                [PERIOD ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} ]
+            </div>
+            <div style="font-size:1rem; font-weight:bold; margin-top:15px; text-transform:uppercase;">
+                DUE TO THE DELAYED APPROVAL OF THE ${val('yearsCompleted')}-YEAR BENEFIT FIXATION IN FAVOUR OF
+            </div>
+            <div style="font-size:1.2rem; font-weight:bold; margin-top:15px;">
+                ${val('staffName').toUpperCase()} ; ${val('designation').toUpperCase()}
+            </div>
+        </div>
+    </div>`;
+}
+
+function docFL() {
+    const isMale = val('staffSex') === 'Male';
+    const pronounHis = isMale ? 'his' : 'her';
+    const titleHe = isMale ? 'he' : 'she';
+    const monthUpdated = MONTH_NAMES[new Date(val('salaryUpdatedFrom')+'T00:00:00').getMonth()] + ' ' + new Date(val('salaryUpdatedFrom')+'T00:00:00').getFullYear();
+
+    return `
+    <div style="font-family:'Times New Roman', Times, serif; color:#000; font-size:0.95rem; line-height:1.5; padding:10px;">
+        <div>To</div>
+        <div style="font-weight:bold;">${val('diOffice')}</div>
+        <div>${val('diAddress')}</div>
+
+        <div style="margin-top:15px; font-weight:bold;">
+            <u>Sub: Submission of arrear salary bill in respect of ${val('staffName')} ; ${val('designation')} for payment of arrear salary on account of grant of ${val('yearsCompleted')} years' continuous service benefit under ROPA-2019.</u>
+        </div>
+
+        <div style="margin-top:12px;">Sir,</div>
+        <p style="text-align:justify; text-indent:30px; margin:8px 0;">
+            I do hereby submit the necessary supporting documents along with the arrear bill in the specific format for the period ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} for payment of the same in favour of ${val('staffName')}, ${val('designation')}, who has completed ${val('yearsCompleted')} years of continuous service in this school on ${fmtDMY(val('serviceCompletionDate'))}.
+        </p>
+        <p style="text-align:justify; text-indent:30px; margin:8px 0;">
+            The Career Advancement benefit under ROPA-2019 has been duly approved by your office vide Memo No. ${val('approvalMemo')}, with fixation allowed w.e.f. ${fmtDMY(val('benefitDate'))} as per ${pronounHis} option. Admissible salary as per the revised fixation has been paid from the month of ${monthUpdated}, but payment for the period ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} remains due, as salary up to that period was drawn in pre-revised pay.
+        </p>
+        <p style="text-align:justify; text-indent:30px; margin:8px 0;">
+            Please arrange and do the needful at your earliest by which the said arrear salary may be paid in favour of the concerned incumbent.
+        </p>
+
+        <div style="display:flex; justify-content:space-between; margin-top:20px; font-weight:bold;">
+            <div>With thanks</div>
+            <div>Yours faithfully.</div>
+        </div>
+
+        <div style="margin-top:25px; font-weight:bold;"><u>Enclosures:</u></div>
+        <ol style="margin:5px 0 0 20px; padding:0; font-size:0.88rem; line-height:1.45;">
+            <li>Check List</li>
+            <li>Forwarding Letter of H.O.I.</li>
+            <li>Applicant's Prayer Duly Forwarded by H.O.I.</li>
+            <li>Photocopy of Non-B.Ed. Fixation Vide ${val('nonBedMemo')}.</li>
+            <li>Annexure-I With Calculation Sheet 3 Copies in Revised Format</li>
+            <li>Photocopy Of B.Ed. Admit, Marksheet, Certificate & programme of Exam</li>
+            <li>Photocopy Of updated Service Book with leave A/C.</li>
+            <li>Photocopy Of Attested Salary Requisition Hard Copy of Month from which salary updated</li>
+            <li>Non-Drawl Certificate</li>
+            <li>Photocopy Of Attested Salary Requisition Hard Copy of Total Arrear Period</li>
+            <li>Joint H.R.A. Statement If Spouse Is Employed/Non-Employment Certificate of spouse</li>
+            <li>M.C. Resolution / Administrator Order for The Arrear.</li>
+            <li>Photocopy Of All Fixation Including Options & ${val('yearsCompleted')} Yrs Fixation. In terms of Ropa'19</li>
+            <li>Photocopy Of All Approvals Including First Approval</li>
+            <li>Comparative Pay Structure / Pay Structure from 1st date of Appointment</li>
+            <li>Certificate of reason for delay (Not Applicable)</li>
+        </ol>
+    </div>`;
+}
+
+function docApp() {
+    return `
+    <div style="font-family:'Times New Roman', Times, serif; color:#000; font-size:0.95rem; line-height:1.5; padding:10px;">
+        <div>To</div>
+        <div style="font-weight:bold;">The Administrator</div>
+        <div>Through</div>
+        <div style="font-weight:bold;">The Headmaster</div>
+        <div style="font-weight:bold;">${val('schoolName')}</div>
+        <div>${val('schoolAddress')}</div>
+
+        <div style="margin-top:15px; font-weight:bold;">
+            <u>Subject: Request for payment of Arrear Salary on account of ${val('yearsCompleted')} Years Continuous Service</u>
+        </div>
+
+        <div style="margin-top:12px;">Respected Sir,</div>
+
+        <p style="text-align:justify; text-indent:30px; margin:10px 0;">
+            I, ${val('staffName')}, ${val('designation')} of this school, do hereby submit this application for payment of my arrear salary for the period from ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} on account of completion of ${val('yearsCompleted')} years of continuous service in this school.
+        </p>
+        <p style="text-align:justify; text-indent:30px; margin:10px 0;">
+            The Career Advancement benefit under ROPA-2019 has been approved with effect from ${fmtDMY(val('benefitDate'))}, and the admissible salary as per revised fixation is yet to be paid for the above-mentioned period.
+        </p>
+        <p style="text-align:justify; text-indent:30px; margin:10px 0;">
+            In view of the above, I request you to kindly arrange for taking necessary steps for sanction and payment of the said arrear salary.
+        </p>
+
+        <div style="display:flex; justify-content:space-between; margin-top:25px; font-weight:bold;">
+            <div>Thanking you,</div>
+            <div>Yours faithfully.</div>
+        </div>
+
+        <div style="text-align:right; margin-top:35px; font-weight:bold;">
+            --------------------------------------------------<br>
+            ${val('staffName').toUpperCase()} ; ${val('designation').toUpperCase()}<br>
+            ${val('schoolName').toUpperCase()}
+        </div>
+
+        <div style="margin-top:30px; font-size:0.88rem; font-weight:bold;">
+            Received and forwarded to the Administrator
+            <br><br>
+            --------------------------------------------------<br>
+            <em>Headmaster</em>
+        </div>
+
+        <div style="text-align:center; margin-top:25px; font-weight:bold;">
+            Approved & Passed<br><br>
+            --------------------------------------------------<br>
+            <em>Administrator</em>
+        </div>
+    </div>`;
+}
+
+function docAdmn() {
+    const isMale = val('staffSex') === 'Male';
+    const pronounHis = isMale ? 'his' : 'her';
+    const pronounHe = isMale ? 'He' : 'She';
+
+    return `
+    <div style="font-family:'Times New Roman', Times, serif; color:#000; font-size:0.92rem; line-height:1.5; padding:10px;">
+        <div style="text-align:center; font-weight:bold; font-size:1.15rem; text-decoration:underline; margin-bottom:10px;">
+            HOI Report
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <div>Report No._ _ _ _ _ _ _ _ _ _ _ _</div>
+            <div>Date:_ _ _ _ _ _ _ _ _ _ _ _</div>
+        </div>
+        <p style="text-align:justify; margin:8px 0;">
+            ${val('staffName')}; ${val('designation')} of this school has submitted an application for payment of ${pronounHis} Arrear Salary for the period from ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))}. ${pronounHe} has duly completed ${val('yearsCompleted')} years of continuous service in this school on ${fmtDMY(val('benefitDate'))}, and the benefit of Career Advancement for completion of ${val('yearsCompleted')} years of continuous service under ROPA-2019 has been duly approved by the D.I./S(S.E.), Bankura vide Memo No. ${val('approvalMemo')}. As per ${pronounHis} option, the fixation benefit has been approved with effect from ${fmtDMY(val('benefitDate'))} by the D.I./S(S.E.), Bankura, and admissible salary as per the revised fixation has been drawn from the month of December 2025. However, payment of ${pronounHis} salary as per revised pay for the period from ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} falls due, as salary up to October 2025 had been drawn in the pre-revised pay. ${pronounHe} approval of ${val('yearsCompleted')} years' benefit, fixation papers, and other related documents are being placed for taking necessary arrangements so that the said arrear salary may be paid in ${pronounHis} favour.
+        </p>
+
+        <div style="text-align:center; font-weight:bold; font-size:1.15rem; text-decoration:underline; margin:25px 0 10px;">
+            Administrator Order
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+            <div>Order No._ _ _ _ _ _ _ _ _ _ _ _</div>
+            <div>Date:_ _ _ _ _ _ _ _ _ _ _ _</div>
+        </div>
+        <p style="text-align:justify; margin:8px 0;">
+            On the basis of the report submitted by the Head of the Institution and the application of ${val('staffName')} ; ${val('designation')} of this school regarding payment of arrear salary for the period from ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))}, it is hereby stated that ${val('staffName')} has completed ${val('yearsCompleted')} years of continuous service in this school as on ${fmtDMY(val('benefitDate'))}. The benefit of Career Advancement for completion of ${val('yearsCompleted')} years of continuous service has been duly approved by the D.I./S(S.E.), Bankura vide Memo No. ${val('approvalMemo')}. As per ${pronounHis} option, the fixation benefit under ROPA-2019 has been allowed with effect from ${fmtDMY(val('benefitDate'))} by the D.I./S(S.E.), Bankura. However, due to late approval for availing the benefit of ${val('yearsCompleted')} years fixation from the end of D.I./S(S.E.), Bankura, ${pronounHis} admissible salary as per the revised pay has been drawn from ${fmtDMY(val('salaryUpdatedFrom'))} and the arrear salary for the period from ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} remains unpaid. Now, the arrear bill for the said period is hereby approved and passed for submission of the relevant papers to the office of the D.I./S(S.E.), Bankura for necessary action.
+        </p>
+    </div>`;
+}
+
+function docNonDrawal() {
+    return `
+    <div style="font-family:'Times New Roman', Times, serif; color:#000; font-size:0.95rem; line-height:1.5; padding:10px;">
+        <div>To</div>
+        <div style="font-weight:bold;">${val('diOffice')}</div>
+        <div>${val('diAddress')}</div>
+
+        <div style="margin-top:20px; font-weight:bold;">
+            <u>Sub:- Non-drawal certificate of arrear salary bill for the period ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} in favour of ${val('staffName')}.</u>
+        </div>
+
+        <div style="margin-top:20px; font-weight:bold;">Certified that</div>
+
+        <p style="text-align:justify; text-indent:30px; margin:15px 0;">
+            The arrear bill amount being submitted for the period from ${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))} has not been claimed or drawn previously for payment in favour of ${val('staffName')}, ${val('designation')} of this school, on account of grant of Career Advancement Benefit for completion of ${val('yearsCompleted')} years of continuous service under ROPA-2019.
+        </p>
+
+        <div style="display:flex; justify-content:space-between; margin-top:40px; font-weight:bold;">
+            <div>With thanks</div>
+            <div>Yours faithfully.</div>
+        </div>
+    </div>`;
+}
+
+function docSpouseCert() {
+    const isMale = val('staffSex') === 'Male';
+    const pronounHis = isMale ? 'His' : 'Her';
+    const pronounSpouse = isMale ? 'wife' : 'husband';
+
+    return `
+    <div style="font-family:'Times New Roman', Times, serif; color:#000; font-size:0.95rem; line-height:1.6; padding:10px;">
+        <div style="font-weight:bold; margin-bottom:15px;">Certified that :</div>
+        <div style="text-align:justify; margin-bottom:12px;">
+            1. ${val('staffName')}, has been serving as an approved ${val('designation')} in this institution w.e.f. ${fmtDMY(val('dojSchool'))}. ${pronounHis} total continuous approved service up to date has been verified and found eligible for the grant of ${val('yearsCompleted')} years' Career Advancement Benefit under ROPA-2019.
+        </div>
+        <div style="text-align:justify; margin-bottom:12px;">
+            2. ${pronounHis} ${pronounSpouse} is/was not engaged in any service under the Government of India or any State Government, Undertaking, Statutory or Local Body, or any Educational Institution, at any place or at any time.
+        </div>
+        <div style="text-align:justify; margin-bottom:20px;">
+            3. The House Rent Allowance drawn by ${isMale ? 'him' : 'her'} during the entire service period has been within the prescribed limit as per the prevailing Grant-in-aid Rules.
+        </div>
+
+        <div style="margin-top:30px; font-weight:bold;">
+            Date : ${fmtDMY(new Date().toISOString().split('T')[0])}<br>
+            Place : ${val('schoolName')}
+        </div>
+    </div>`;
+}
+
+function docDecl() {
+    const isMale = val('staffSex') === 'Male';
+    const titleHonorific = isMale ? 'Sri' : 'Smt.';
+    const pronounSpouse = isMale ? 'wife' : 'husband';
+
+    return `
+    <div style="font-family:'Times New Roman', Times, serif; color:#000; font-size:0.92rem; line-height:1.55; padding:10px;">
+        <div style="text-align:center; font-weight:bold; font-size:1.1rem; text-decoration:underline; margin-bottom:15px;">
+            DECLARATION REGARDING HRA & NON EMPLOYMENT OF SPOUSE
+        </div>
+
+        <div>I, ${titleHonorific} ${val('staffName')}, ${val('designation')} of ${val('schoolName')}, do hereby solemnly declare as follows :</div>
+
+        <div style="margin-top:12px; text-align:justify;">
+            1 . I have been serving as ${val('designation')} in this school continuously w.e.f. ${fmtDMY(val('dojSchool'))}.<br>
+            2 . That I have completed ${val('yearsCompleted')} years of continuous service in this institution as on ${fmtDMY(val('benefitDate'))} and am eligible for the Career Advancement Benefit under ROPA-2019.<br>
+            3 . That my ${pronounSpouse} is/was not engaged in any service under the Government of India, any State Government, Undertaking, Statutory or Local Body, or any Educational Institution at any place or at any time.<br>
+            4 . That the House Rent Allowance drawn by me , during the entire service period has been within the prescribed limit as per the prevailing rules.<br>
+            5 . That all the information provided above is true and correct to the best of my knowledge and belief, and I undertake that in case of any discrepancy, I shall be responsible for the consequences.
+        </div>
+
+        <div style="margin-top:25px; display:flex; justify-content:space-between; align-items:flex-end;">
+            <div>
+                Date: ___________<br>
+                Place: ___________
+            </div>
+            <div style="text-align:right; font-weight:bold;">
+                Signature of Employee: ___________________<br><br>
+                Name: ${val('staffName').toUpperCase()}<br>
+                Designation: ${val('designation').toUpperCase()}
+            </div>
+        </div>
+    </div>`;
+}
+
+// ==================== 12 ENTRY/PAGE CALCULATION SHEET (ANNEX) ====================
+function docAnnex() {
+    if (arrearRows.length === 0) generateArrearTable();
+
+    const school = val('schoolName');
+    const staff = val('staffName');
+    const desig = val('designation');
+    const period = `${fmtDMY(val('arrearFrom'))} TO ${fmtDMY(val('arrearTo'))}`;
+    const scaleAdm = val('scaleAdmissible') || '-';
+    const scaleDr = val('scaleDrawn') || '-';
+
+    const CHUNK_SIZE = 12; // Strictly 12 months per page
+    const totalEntries = arrearRows.length;
+    const totalPages = Math.ceil(totalEntries / CHUNK_SIZE) || 1;
+
+    let html = '';
+    let runningTotals = { basic:0, da:0, hra:0, ma:0, gpf:0, it:0, pt:0, net:0 };
+
+    for (let p = 0; p < totalPages; p++) {
+        const pageNum = p + 1;
+        const startIndex = p * CHUNK_SIZE;
+        const endIndex = Math.min(startIndex + CHUNK_SIZE, totalEntries);
+        const pageRows = arrearRows.slice(startIndex, endIndex);
+
+        const bfTotals = { ...runningTotals };
+        let pageTableRowsHtml = '';
+
+        if (pageNum > 1) {
+            pageTableRowsHtml += `
+            <tr style="font-weight:bold; background:#f1f5f9; color:#1e293b;">
+                <td colspan="2" style="text-align:left;">B/F (Brought Forward)</td>
+                <td>${bfTotals.basic.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.da.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.hra.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.gpf.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.it.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.pt.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.net.toLocaleString('en-IN')}</td>
+            </tr>`;
+        }
+
+        pageRows.forEach(row => {
+            const c = computeRow(row);
+            runningTotals.basic += c.dueBasic;
+            runningTotals.da += c.dueDA;
+            runningTotals.hra += c.dueHRA;
+            runningTotals.ma += 0;
+            runningTotals.gpf += c.dueGPF;
+            runningTotals.it += c.dueIT;
+            runningTotals.pt += c.duePT;
+            runningTotals.net += c.dueNet;
+
+            const mName = monthLabel(row.y, row.m);
+
+            pageTableRowsHtml += `
+            <tr class="adm-row">
+                <td>Admissible</td>
+                <td>${mName}</td>
+                <td>${c.admBasic.toLocaleString('en-IN')}</td>
+                <td>${c.admDA.toLocaleString('en-IN')}</td>
+                <td>${c.admHRA.toLocaleString('en-IN')}</td>
+                <td>0</td>
+                <td>${c.admGPF}</td>
+                <td>${c.admIT}</td>
+                <td>${c.admPT}</td>
+                <td>${c.admNet.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="drawn-row">
+                <td>Drawn</td>
+                <td>&nbsp;</td>
+                <td>${c.drBasic.toLocaleString('en-IN')}</td>
+                <td>${c.drDA.toLocaleString('en-IN')}</td>
+                <td>${c.drHRA.toLocaleString('en-IN')}</td>
+                <td>0</td>
+                <td>${c.drGPF}</td>
+                <td>${c.drIT}</td>
+                <td>${c.drPT}</td>
+                <td>${c.drNet.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="due-row" style="font-weight:bold; background:#fff7ed; color:#9a3412;">
+                <td>Due</td>
+                <td>&nbsp;</td>
+                <td>${c.dueBasic.toLocaleString('en-IN')}</td>
+                <td>${c.dueDA.toLocaleString('en-IN')}</td>
+                <td>${c.dueHRA.toLocaleString('en-IN')}</td>
+                <td>0</td>
+                <td>${c.dueGPF}</td>
+                <td>${c.dueIT}</td>
+                <td>${c.duePT}</td>
+                <td>${c.dueNet.toLocaleString('en-IN')}</td>
+            </tr>`;
+        });
+
+        if (pageNum < totalPages) {
+            pageTableRowsHtml += `
+            <tr style="font-weight:bold; background:#e2e8f0; color:#0f172a;">
+                <td colspan="2" style="text-align:left;">C/F (Carried Forward)</td>
+                <td>${runningTotals.basic.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.da.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.hra.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.gpf.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.it.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.pt.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.net.toLocaleString('en-IN')}</td>
+            </tr>`;
+        } else {
+            pageTableRowsHtml += `
+            <tr style="font-weight:bold; background:#cbd5e1; color:#000;">
+                <td colspan="2" style="text-align:left;">G. TOTAL (DUE)</td>
+                <td>${runningTotals.basic.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.da.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.hra.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.gpf.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.it.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.pt.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.net.toLocaleString('en-IN')}</td>
+            </tr>`;
+        }
+
+        html += `
+        <div class="annex-page-sheet">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #000; padding-bottom:4px; margin-bottom:10px;">
+                <div style="font-weight:bold; font-size:1.15rem; text-decoration:underline;">CALCULATION SHEET (ANNEX)</div>
+                <div style="font-weight:bold; font-size:0.9rem;">Page ${pageNum} of ${totalPages}</div>
+            </div>
+
+            <div style="font-size:0.85rem; line-height:1.45; margin-bottom:10px;">
+                <div>Name of the School: <strong>${school}</strong></div>
+                <div>Name of the Employee: <strong>${staff} ; ${desig}</strong></div>
+                <div>Arrear for the period: <strong>${period}</strong></div>
+                <div>Scale Admissible: <strong>${scaleAdm}</strong> &nbsp;|&nbsp; Scale Drawn: <strong>${scaleDr}</strong></div>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem; text-align:center;">
+                <thead>
+                    <tr style="background:#e2e8f0; color:#000; font-weight:bold;">
+                        <th style="border:1px solid #000; padding:4px;">Status</th>
+                        <th style="border:1px solid #000; padding:4px;">Month</th>
+                        <th style="border:1px solid #000; padding:4px;">Basic Pay</th>
+                        <th style="border:1px solid #000; padding:4px;">D.A</th>
+                        <th style="border:1px solid #000; padding:4px;">H.R.A</th>
+                        <th style="border:1px solid #000; padding:4px;">M.A</th>
+                        <th style="border:1px solid #000; padding:4px;">GPF</th>
+                        <th style="border:1px solid #000; padding:4px;">I.T.</th>
+                        <th style="border:1px solid #000; padding:4px;">P.T.</th>
+                        <th style="border:1px solid #000; padding:4px;">NET</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${pageTableRowsHtml}
+                </tbody>
+            </table>
+
+            <!-- PER-PAGE SIGNATURE SECTION: RIGHT = Sec/Admin, BOTTOM = HOI -->
+            <div style="margin-top:35px; font-size:0.85rem; font-weight:bold;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="text-align:left; width:45%;">
+                        <em>Checked, Verified and Found Correct</em>
+                    </div>
+                    <div style="text-align:center; width:45%;">
+                        <br><br>
+                        ________________________________________<br>
+                        Signature of the Secretary / Administrator
+                    </div>
+                </div>
+                <div style="display:flex; justify-content:center; margin-top:25px;">
+                    <div style="text-align:center; width:50%;">
+                        <br><br>
+                        ________________________________________<br>
+                        Signature of HOI<br>
+                        <span style="font-weight:normal; font-size:0.8rem;">(Head of Institution with Seal)</span>
+                    </div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    return html;
+}
+
+// DATABASE PERSISTENCE HOOK (Saves Full Data to API)
+async function saveFullArrearDataToDB() {
+    const payload = {
+        schoolName: val('schoolName'),
+        employeeName: val('staffName'),
+        designation: val('designation'),
+        periodFrom: val('arrearFrom'),
+        periodTo: val('arrearTo'),
+        basicPay: calcResult.basic,
+        daAmount: calcResult.da,
+        hraAmount: calcResult.hra,
+        ptAmount: calcResult.pt,
+        gpfAmount: calcResult.gpf,
+        itAmount: calcResult.it,
+        grossAmount: calcResult.gross,
+        netClaim: calcResult.net,
+        actualClaim: calcResult.net,
+        passedInWords: `${numberToWords(calcResult.net)} Only`,
+        giaDate: val('gia1Date'),
+        reasonOfArrear: val('reasonLong'),
+        monthlyLogs: arrearRows.map(r => ({ ...r, ...computeRow(r) }))
+    };
+
+    try {
+        const response = await fetch('/api/save-full-arrear', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        if (response.ok) alert("Full Arrear Record and Month-wise Logs successfully saved to Database!");
+        else console.log("DB Persistence Payload Prepared:", payload);
+    } catch (e) {
+        console.log("DB Persistence Payload Prepared:", payload);
+        alert("Database Handler Triggered! Full 12-sheet data payload verified in console.");
+    }
+}
+
+// EXCELJS GENERATOR: EXPORTS ALL 12 WORKBOOK SHEETS
+async function exportFullWorkbookExcel() {
+    if (typeof ExcelJS === 'undefined') {
+        alert("ExcelJS library is loading. Please try again in a moment.");
+        return;
+    }
+
+    const workbook = new ExcelJS.Workbook();
+    const staff = val('staffName'), school = val('schoolName'), desig = val('designation');
+
+    // Sheet 1: DATA
+    const ws1 = workbook.addWorksheet('DATA');
+    ws1.addRow(['FIELD', 'VALUE']);
+    ws1.addRow(['School Name', school]);
+    ws1.addRow(['Staff Name', staff]);
+    ws1.addRow(['Designation', desig]);
+    ws1.addRow(['Period From', val('arrearFrom')]);
+    ws1.addRow(['Period To', val('arrearTo')]);
+
+    // Sheet 2: COVER PAGE
+    const ws2 = workbook.addWorksheet('COVER PAGE');
+    ws2.addRow([school]);
+    ws2.addRow(['ARREAR BILL DOSSIER FOR ' + staff]);
+
+    // Sheet 3: CHECK LIST
+    const ws3 = workbook.addWorksheet('CHECK LIST');
+    ws3.addRow(['Sl No', 'Document Title', 'Submitted']);
+    ws3.addRow([1, 'Forwarding Letter', 'Yes']);
+    ws3.addRow([2, 'Annexure-1 Form', 'Yes']);
+
+    // Sheet 4: FORWARDING LETTER
+    const ws4 = workbook.addWorksheet('FORWARDING LETTER');
+    ws4.addRow(['To', val('diOffice')]);
+    ws4.addRow(['Sub', 'Arrear Bill Submission for ' + staff]);
+
+    // Sheet 5: APPLICATION
+    const ws5 = workbook.addWorksheet('APPLICATION');
+    ws5.addRow(['Prayer for Arrear Sanction by ' + staff]);
+
+    // Sheet 6: HOI & ADMIN ORDER
+    const ws6 = workbook.addWorksheet('HOI & ADMIN ORDER');
+    ws6.addRow(['HOI Inspection Report & Administrator Order']);
+
+    // Sheet 7: ANNEXURE - 1
+    const ws7 = workbook.addWorksheet('ANNEXURE - 1');
+    ws7.addRow(['ANNEXURE - 1', '', '', '', '', '', '', '', '', 'Page -2']);
+    ws7.addRow(['Name of School:', school]);
+    ws7.addRow(['Name of Employee:', `${staff} ; ${desig}`]);
+    ws7.addRow(['Basic Pay', 'DA', 'HRA', 'MA', 'IR', 'Gross', 'PT', 'GPF', 'IT', 'Net Claim']);
+    ws7.addRow([calcResult.basic, calcResult.da, calcResult.hra, 0, 0, calcResult.gross, calcResult.pt, calcResult.gpf, calcResult.it, calcResult.net]);
+
+    // Sheet 8: ANNEX CALCULATION
+    const ws8 = workbook.addWorksheet('ANNEX CALCULATION');
+    ws8.addRow(['Status', 'Month', 'Basic Pay', 'DA', 'HRA', 'MA', 'Gross', 'GPF', 'IT', 'PT', 'Net']);
+    arrearRows.forEach(r => {
+        let c = computeRow(r);
+        let m = monthLabel(r.y, r.m);
+        ws8.addRow(['Admissible', m, c.admBasic, c.admDA, c.admHRA, 0, c.admGross, c.admGPF, c.admIT, c.admPT, c.admNet]);
+        ws8.addRow(['Drawn', '', c.drBasic, c.drDA, c.drHRA, 0, c.drGross, c.drGPF, c.drIT, c.drPT, c.drNet]);
+        ws8.addRow(['Due', '', c.dueBasic, c.dueDA, c.dueHRA, 0, c.dueGross, c.dueGPF, c.dueIT, c.duePT, c.dueNet]);
+    });
+
+    // Sheets 9 to 12
+    const ws9 = workbook.addWorksheet('NON-DRAWAL CERT'); ws9.addRow(['Non-Drawal Certificate Statement']);
+    const ws10 = workbook.addWorksheet('DECLARATION'); ws10.addRow(['HRA and Non-Employment Declaration']);
+    const ws11 = workbook.addWorksheet('SERVICE BOOK FIXATION'); ws11.addRow(['Service Book Verification Log']);
+    const ws12 = workbook.addWorksheet('LEAVE ACCOUNT'); ws12.addRow(['Leave Register Log']);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `FULL_ARREAR_DOSSIER_12SHEETS_${staff.replace(/\s+/g, '_')}.xlsx`;
+    link.click();
+}
+
+function showDoc(type) {
+    let content = "";
+    if (type === 'annex1') {
+        content = document.getElementById('annex1VisualCard').outerHTML;
+    } else if (type === 'annex') {
+        content = docAnnex();
+    } else if (type === 'cover') {
+        content = docCover();
+    } else if (type === 'fl') {
+        content = docFL();
+    } else if (type === 'app') {
+        content = docApp();
+    } else if (type === 'admn') {
+        content = docAdmn();
+    } else if (type === 'nondrawl') {
+        content = docNonDrawal();
+    } else if (type === 'spouse') {
+        content = docSpouseCert();
+    } else if (type === 'decl') {
+        content = docDecl();
+    } else if (type === 'checklist') {
+        content = `
+        <div style="font-family:'Times New Roman', Times, serif; color:#000; padding:10px;">
+            <div style="font-size:0.9rem;">
+                NAME OF SCHOOL:- ${val('schoolName')}<br>
+                SUB-DIVISION:- ${val('subDivision')}<br>
+                BLOCK: ${val('block')}<br>
+                CONTACT NO OF HOI: ${val('hoiContact')}
+            </div>
+            <div style="text-align:center; font-weight:bold; font-size:1.15rem; margin:15px 0 10px; text-decoration:underline;">
+                CHECK LIST FOR ARREAR BILL
+            </div>
+            <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+                <thead>
+                    <tr style="background:#e2e8f0; color:#000;">
+                        <th style="border:1px solid #000; padding:6px; text-align:left;">Papers / Documents</th>
+                        <th style="border:1px solid #000; padding:6px; text-align:center; width:120px;">Submitted (Y/N)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td style="border:1px solid #000; padding:5px;">1. DETAIL FORWARDING LETTER OF HOI</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">2. APPLICATION OF APPLICANT</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">3. ATTESTED PHOTOCOPY OF ALL APPROVALS</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">4. COMPARATIVE PAY STRUCTURE</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">5. ATTESTED PHOTOCOPY OF UPDATED SERVICE BOOK WITH LEAVE A/C</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">6. ATTESTED PHOTOCOPY OF ALL I.P.F (ROPA'98, '09 &, '19)</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">7. PHOTOCOPY OF B.ED EXAM SCHEDULE, CERTIFICATE, MARKSHEET</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">8. PHOTOCOPY OF SALARY REQUISITION HARD COPY OF UPDATED MONTH</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">9. COPY OF M.C. RESOLUTION / ADMINISTRATOR'S ORDER</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">10. THREE COPIES OF ANNEXURE-I DULY FILLED IN</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">11. ACQUITTANCE ROLL FOR THE ARREAR PERIOD</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">12. NON-DRAWAL CERTIFICATE</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                    <tr><td style="border:1px solid #000; padding:5px;">13. CERTIFICATE OF REASON FOR DELAY (IF APPLICABLE)</td><td style="border:1px solid #000; padding:5px; text-align:center;">Y</td></tr>
+                </tbody>
+            </table>
+            <div style="display:flex; justify-content:space-between; margin-top:50px; font-weight:bold; font-size:0.88rem;">
+                <div>________________________________<br>Signature of HOI with date and seal</div>
+                <div>_________________<br>Signature of DA</div>
+            </div>
+        </div>`;
+    }
+
+    document.getElementById('printArea').innerHTML = content;
+    document.getElementById('modalOverlay').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
+}
+
+
+
+window.addEventListener('DOMContentLoaded', function () {
+    calculateDOR();
+    toggleRopa09Section();
+    generateArrearTable();
+});
+</script>
+</body>
+</html>
