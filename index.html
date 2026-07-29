@@ -8,7 +8,15 @@
 
 <style id="printPageStyle">
     @media print {
-        @page { size: A4 portrait; margin: 12mm 10mm; }
+        @page { size: A4 portrait; margin: 8mm 6mm; }
+        html, body { background: #fff !important; color: #000 !important; font-size: 9.5px !important; width: 100% !important; margin: 0 !important; padding: 0 !important; }
+        .container { width: 100% !important; max-width: 100% !important; padding: 0 !important; box-shadow: none !important; margin: 0 !important; }
+        table { width: 100% !important; border-collapse: collapse !important; font-size: 8px !important; page-break-inside: auto; }
+        tr { page-break-inside: avoid; page-break-after: auto; }
+        th, td { padding: 2px 2px !important; border: 1px solid #000 !important; word-wrap: break-word; text-align: center; }
+        .table-wrap { overflow: visible !important; width: 100% !important; }
+        .btn-row, .btn-group, .tab-nav, .panel label, .btn-add, .btn-del { display: none !important; }
+        .panel { border: none !important; background: transparent !important; padding: 0 !important; }
     }
 </style>
 
@@ -54,7 +62,6 @@
         padding-left: 10px;
     }
 
-    /* TABS STYLING */
     .tab-nav {
         display: flex;
         gap: 8px;
@@ -93,13 +100,8 @@
         color: #fff;
     }
 
-    .tab-content {
-        display: none;
-    }
-
-    .tab-content.active {
-        display: block;
-    }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
 
     .panel {
         background: #f1f5f9;
@@ -188,7 +190,6 @@
         font-size: 0.8rem;
     }
 
-    /* MANDATORY HEADER FORMATTING: BLACK INK WITH LIGHT GRAY BACKGROUND */
     th {
         background: #e2e8f0 !important;
         color: #000000 !important;
@@ -211,7 +212,7 @@
     tr.total-row td { background: #cbd5e1; color: #000; font-weight: 800; }
 
     .tbl-input { width: 75px; padding: 3px 4px; border: 1px solid #94a3b8; border-radius: 4px; text-align: right; font-size: 0.78rem; font-weight: 600; }
-    .tbl-input.txt { width: 80px; text-align: left; }
+    .tbl-input.txt { width: 100%; text-align: left; }
     .tbl-input.remark { width: 150px; text-align: left; }
     .over-cell { font-weight: 800; color: #9a3412; background: #fff7ed !important; }
 
@@ -235,15 +236,14 @@
 
     .inline-check { font-weight: 400; display: flex; align-items: center; gap: 6px; }
 
-    /* ANNEXURE 1 CARD */
     .annex1-card {
         background: #fff;
         border: 2px solid #000;
-        padding: 25px 30px;
+        padding: 20px 25px;
         font-family: 'Segoe UI', Arial, sans-serif;
         color: #000;
         max-width: 1050px;
-        margin: 20px auto;
+        margin: 10px auto;
         box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
     .annex1-header { text-align: center; position: relative; font-weight: bold; font-size: 1.15rem; margin-bottom: 12px; }
@@ -272,13 +272,12 @@
     .annex-page-sheet {
         background: #fff;
         border: 1px solid #000;
-        padding: 25px;
-        margin-bottom: 30px;
+        padding: 20px;
+        margin-bottom: 20px;
         font-family: 'Times New Roman', serif;
         color: #000;
     }
 
-    /* CHALLAN LOOK */
     .chl-wrap { border: 2px solid #000; padding: 16px 20px; font-size: 0.82rem; }
     .chl-copy-label { text-align: center; font-weight: bold; letter-spacing: 2px; margin-bottom: 6px; }
     .chl-form-no { font-weight: bold; }
@@ -292,12 +291,11 @@
     .chl-sig-grid div { border-top: 1px solid #000; padding-top: 4px; margin-top: 30px; }
     .chl-note { font-size: 0.7rem; margin-top: 16px; }
 
-    /* MODAL */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 999; }
-    .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 30px 10px; }
+    .modal-overlay.active { display: flex; align-items: flex-start; justify-content: center; overflow: auto; padding: 20px 10px; }
     .modal-box { background: #fff; max-width: 1150px; width: 100%; border-radius: 8px; padding: 0; box-shadow: 0 10px 30px rgba(0,0,0,.3); }
     .modal-toolbar { display: flex; justify-content: flex-end; gap: 10px; padding: 12px 20px; background: #f1f5f9; border-bottom: 1px solid var(--border-color); border-radius: 8px 8px 0 0; }
-    #printArea { padding: 25px 30px; font-family: 'Times New Roman', Times, serif; color: #000; }
+    #printArea { padding: 20px 25px; font-family: 'Times New Roman', Times, serif; color: #000; }
     #sbPrintArea { display: none; }
 
     @media print {
@@ -352,8 +350,8 @@
         </div>
     </div>
 
-    <!-- 2. STAFF DETAILS & UNIFIED LWP -->
-    <h3>2. Staff &amp; Service Details (Unified LWP Entry)</h3>
+    <!-- 2. STAFF DETAILS & DISCRETE LWP DB PANEL -->
+    <h3>2. Staff &amp; Service Details (Discrete &amp; Single LWP DB Entries)</h3>
     <div class="panel">
         <div class="grid">
             <div class="fg"><label>Name of Staff</label><input id="staffName" value="PARTHA KUMAR PATRA" onchange="syncSharedFields()"></div>
@@ -373,23 +371,30 @@
             <div class="fg wide"><label>Benefit Description (Used in Subject Lines)</label><input id="benefitDesc" value="18 years' continuous service benefit under ROPA-2019" onchange="updateAll()"></div>
         </div>
 
-        <!-- SINGLE UNIFIED LWP ENTRY PANEL -->
-        <div style="background:#e2e8f0; padding:12px; border-radius:6px; margin-top:10px;">
-            <label style="color:#1e293b; font-weight:bold; margin-bottom:6px; display:block;">
-                Unified Leave Without Pay (LWP) Entry (Used ONCE across ROPA-98, ROPA-09, ROPA-19 & Overdrawn Refund):
-            </label>
-            <div class="grid" style="margin-bottom:0;">
-                <div class="fg">
-                    <label>LWP Type / Ground</label>
-                    <select id="unifiedLwpType" onchange="updateAll()">
-                        <option value="none" selected>No LWP</option>
-                        <option value="medical">Medical Ground (E.O.L.) &mdash; no effect on increment</option>
-                        <option value="other">Other / Personal Reason (Defers 10/18/20-Yr CAS & Increments)</option>
-                    </select>
-                </div>
-                <div class="fg"><label>LWP Start Date</label><input type="date" id="unifiedLwpStart" onchange="updateAll()"></div>
-                <div class="fg"><label>LWP End Date</label><input type="date" id="unifiedLwpEnd" onchange="updateAll()"></div>
-                <div class="fg"><label>LWP Non-Qualifying Days (for ROPA-98)</label><input type="number" id="unifiedLwpDays" value="0" min="0" onchange="updateAll()"></div>
+        <!-- DYNAMIC DISCRETE & SINGLE LWP ENTRY TABLE -->
+        <div style="background:#e2e8f0; padding:14px; border-radius:6px; margin-top:12px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <label style="color:#1e293b; font-weight:bold; font-size:0.9rem; margin-bottom:0;">
+                    Discrete / Single Leave Without Pay (LWP) Service Database Entries:
+                </label>
+                <button type="button" class="btn-add" onclick="addDiscreteLwpRow()">+ Add LWP Spell</button>
+            </div>
+
+            <table style="width:100%; background:#fff; margin-top:6px;" id="discreteLwpTable">
+                <thead>
+                    <tr>
+                        <th style="width:5%;">Sl</th>
+                        <th style="width:28%;">LWP Ground / Type</th>
+                        <th style="width:22%;">Start Date</th>
+                        <th style="width:22%;">End Date</th>
+                        <th style="width:11%;">Days</th>
+                        <th style="width:12%;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="discreteLwpBody"></tbody>
+            </table>
+            <div style="margin-top:8px; font-weight:bold; font-size:0.85rem; color:#1e3a8a;" id="lwpTotalSummaryBox">
+                Total Non-Qualifying LWP Days for CAS Deferral: 0 Days
             </div>
         </div>
 
@@ -423,7 +428,7 @@
             <div class="fg"><label>Initial Basic Pay (ROPA-1998 scale)</label><input type="number" id="ropa98BasicPay" value="5500"></div>
         </div>
         <div class="output-box" style="background-color:#fff7ed;border-left-color:#c2410c;">
-            <strong>10/18/20-Year CAS Rule (ROPA-1998 phase):</strong> Regular annual increments fall on the 1st day of the Option/Fixation month as usual. 10/18/20-Year CAS dates are deferred by LWP days if entered.
+            <strong>ROPA-1998 Deferral Rules:</strong> 10/18/20-Year CAS benefit dates fall on completion date + cumulative LWP days. Annual increments following LWP are deferred day-for-day for that cycle, then subsequent increments revert to the option date.
         </div>
     </div>
 
@@ -454,7 +459,7 @@
             <div class="fg" id="ropa09ManualBandGroup"><label>Initial Band Pay (Excluding GP)</label><input type="number" id="ropa09BandPay" value="13400"></div>
         </div>
         <div class="output-box" style="background-color:#fff7ed;border-left-color:#c2410c;">
-            <strong>LWP / Notional Increment Rule (G.O. No. 181-SE(B) Dt. 8.10.2009):</strong> Regular annual increments fall on the 1st day of July (01-07-YYYY). Extraordinary Leave Without Pay on medical grounds does not defer increment. Personal LWP defers financial benefit while future 1-July cycle dates stay fixed.
+            <strong>LWP Deferral Rules (ROPA-2009 &amp; 2019):</strong> LWP &lt; 30 days in cycle = No increment deferral (remains 1st July). 30 to 59 days LWP = 1 month deferral (1st Aug). 60 to 89 days LWP = 2 months deferral (1st Sept). 10/18/20-Year CAS benefit dates fall on Normal Eligibility Date + Cumulative LWP Days.
         </div>
     </div>
 
@@ -901,13 +906,13 @@ function setPrintOrientation(orientation) {
         document.head.appendChild(style);
     }
     if (orientation === 'landscape') {
-        style.innerHTML = `@media print { @page { size: A4 landscape; margin: 10mm; } }`;
+        style.innerHTML = `@media print { @page { size: A4 landscape; margin: 8mm 6mm; } body { font-size: 10px; } }`;
     } else {
-        style.innerHTML = `@media print { @page { size: A4 portrait; margin: 12mm 10mm; } }`;
+        style.innerHTML = `@media print { @page { size: A4 portrait; margin: 8mm 6mm; } body { font-size: 10px; } }`;
     }
 }
 
-// COMPLETE MATRIX DATASETS
+// MATRIX DATASETS
 const matrixData19 = {
     1: [17000, 17500, 18000, 18500, 19100, 19700, 20300, 20900, 21500, 22100, 22800, 23500, 24200, 24900, 25600, 26400, 27200, 28000, 28800, 29700, 30600, 31500, 32400, 33400, 34400, 35400, 36500, 37600, 38700, 39900, 41100, 42300, 43600],
     2: [17600, 18100, 18600, 19200, 19800, 20400, 21000, 21600, 22200, 22900, 23600, 24300, 25000, 25800, 26600, 27400, 28200, 29000, 29900, 30800, 31700, 32700, 33700, 34700, 35700, 36800, 37900, 39000, 40200, 41400, 42600, 43900, 45200],
@@ -942,9 +947,113 @@ const matrixData98 = {
 
 const ROPA98_TO_09_FACTOR = 1.86;
 const ROPA09_CUTOFF = new Date(2019, 11, 31);
-const ROPA98_CUTOFF = new Date(2009, 2, 31); // 31.03.2009 Cutoff ALWAYS
+const ROPA98_CUTOFF = new Date(2009, 2, 31);
 
 function ceilToNext10(value) { return Math.ceil(value / 10) * 10; }
+
+// DISCRETE & SINGLE LWP ENGINE DATA MODEL
+let discreteLwpList = [
+    { id: 1, type: 'other', start: '2015-01-05', end: '2015-01-17', days: 13 },
+    { id: 2, type: 'other', start: '2022-01-02', end: '2022-01-02', days: 1 },
+    { id: 3, type: 'other', start: '2025-07-09', end: '2025-07-09', days: 1 }
+];
+let lwpSeq = 3;
+
+function renderDiscreteLwpTable() {
+    const tbody = document.getElementById('discreteLwpBody');
+    if (!tbody) return;
+    tbody.innerHTML = '';
+
+    let totalNonQualifyingDays = 0;
+
+    discreteLwpList.forEach((item, idx) => {
+        let d1 = item.start ? new Date(item.start + 'T00:00:00') : null;
+        let d2 = item.end ? new Date(item.end + 'T00:00:00') : null;
+        let calcDays = 0;
+
+        if (d1 && d2 && d2 >= d1) {
+            calcDays = Math.ceil(Math.abs(d2 - d1) / (1000 * 60 * 60 * 24)) + 1;
+        } else if (item.days > 0) {
+            calcDays = item.days;
+        }
+        item.days = calcDays;
+
+        if (item.type === 'other') {
+            totalNonQualifyingDays += calcDays;
+        }
+
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${idx + 1}</td>
+            <td>
+                <select class="tbl-input txt" style="width:100%;" onchange="updateLwpItem(${item.id}, 'type', this.value)">
+                    <option value="other" ${item.type === 'other' ? 'selected' : ''}>Personal / Other (Non-Qualifying)</option>
+                    <option value="medical" ${item.type === 'medical' ? 'selected' : ''}>Medical (E.O.L. - Qualifying)</option>
+                </select>
+            </td>
+            <td><input type="date" class="tbl-input txt" style="width:95%;" value="${item.start}" onchange="updateLwpItem(${item.id}, 'start', this.value)"></td>
+            <td><input type="date" class="tbl-input txt" style="width:95%;" value="${item.end}" onchange="updateLwpItem(${item.id}, 'end', this.value)"></td>
+            <td><strong>${item.days}</strong></td>
+            <td><button type="button" class="btn-del" onclick="removeLwpItem(${item.id})">Del</button></td>
+        `;
+        tbody.appendChild(tr);
+    });
+
+    document.getElementById('lwpTotalSummaryBox').innerHTML = 
+        `Total Non-Qualifying LWP Days for CAS Deferral: <strong>${totalNonQualifyingDays} Days</strong>`;
+}
+
+function addDiscreteLwpRow() {
+    discreteLwpList.push({ id: ++lwpSeq, type: 'other', start: '', end: '', days: 0 });
+    renderDiscreteLwpTable();
+}
+
+function removeLwpItem(id) {
+    discreteLwpList = discreteLwpList.filter(x => x.id !== id);
+    renderDiscreteLwpTable();
+    processFixationTimeline();
+}
+
+function updateLwpItem(id, field, value) {
+    let item = discreteLwpList.find(x => x.id === id);
+    if (item) {
+        item[field] = value;
+        renderDiscreteLwpTable();
+        processFixationTimeline();
+    }
+}
+
+// CUMULATIVE LWP DEFERRAL LOOKUP
+function getCumulativeLwpDaysUpTo(milestoneDate) {
+    let accumulatedDays = 0;
+    discreteLwpList.forEach(item => {
+        if (item.type === 'other' && item.start) {
+            let lwpStartDate = new Date(item.start + 'T00:00:00');
+            if (lwpStartDate <= milestoneDate) {
+                accumulatedDays += item.days;
+            }
+        }
+    });
+    return accumulatedDays;
+}
+
+// SPAN-AWARE LWP REMARKS LOOKUP
+function getLwpSpanRemark(rowStartDate, rowEndDate) {
+    let matchingSpans = [];
+    discreteLwpList.forEach(item => {
+        if (item.start && item.end) {
+            let sDate = new Date(item.start + 'T00:00:00');
+            let eDate = new Date(item.end + 'T00:00:00');
+            if ((sDate <= rowEndDate && eDate >= rowStartDate)) {
+                matchingSpans.push(`${formatDate(sDate)} to ${formatDate(eDate)} (${item.days} day${item.days > 1 ? 's' : ''})`);
+            }
+        }
+    });
+    if (matchingSpans.length > 0) {
+        return `<div style="font-size:0.75rem; color:#c2410c; margin-top:2px;">[LWP Spell in Span: ${matchingSpans.join(', ')}]</div>`;
+    }
+    return '';
+}
 
 // TAB SWITCHER
 function switchTab(tabId) {
@@ -1071,35 +1180,6 @@ function checkWindow(milestoneDate) {
     return (milestoneDate >= startWinA && milestoneDate <= endWinA) ? 'A' : 'B';
 }
 
-function wholeMonthsBetween(start, end) {
-    let months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth());
-    if (end.getDate() < start.getDate()) months -= 1;
-    return Math.max(0, months);
-}
-
-function computeLwpEffect(lwpType, lwpStart, lwpEnd) {
-    if (lwpType !== 'other' || !(lwpStart instanceof Date) || !(lwpEnd instanceof Date) || isNaN(lwpStart) || isNaN(lwpEnd) || lwpEnd < lwpStart) {
-        return null;
-    }
-    const months = wholeMonthsBetween(lwpStart, lwpEnd);
-    if (months < 1) return null;
-
-    let cyc = new Date(lwpStart.getFullYear(), 6, 1);
-    if (cyc <= lwpStart) cyc = new Date(lwpStart.getFullYear() + 1, 6, 1);
-    const spansCycleDate = (lwpStart <= cyc && cyc <= lwpEnd);
-
-    if (months >= 12 && spansCycleDate) {
-        return { affectedYear: cyc.getFullYear(), skip: true, deferred: false, financialDate: cyc };
-    }
-    if (spansCycleDate) {
-        let rejoinMonthStart = new Date(lwpEnd.getFullYear(), lwpEnd.getMonth() + 1, 1);
-        let financialDate = new Date(rejoinMonthStart.getFullYear(), rejoinMonthStart.getMonth() + months, 1);
-        return { affectedYear: cyc.getFullYear(), skip: false, deferred: true, financialDate };
-    }
-    let financialDate = new Date(cyc.getFullYear(), cyc.getMonth() + months, cyc.getDate());
-    return { affectedYear: cyc.getFullYear(), skip: false, deferred: true, financialDate };
-}
-
 function finalizeDot(compiledRows, endDate) {
     for (let i = 0; i < compiledRows.length; i++) {
         if (i < compiledRows.length - 1) {
@@ -1111,6 +1191,12 @@ function finalizeDot(compiledRows, endDate) {
             }
         } else {
             compiledRows[i].dot = endDate;
+        }
+
+        // APPEND SPAN-AWARE REMARKS
+        let spanRemark = getLwpSpanRemark(compiledRows[i].date, compiledRows[i].dot);
+        if (spanRemark && !compiledRows[i].label.includes('LWP Spell')) {
+            compiledRows[i].label += spanRemark;
         }
     }
 }
@@ -1136,58 +1222,60 @@ function toggleRopa09Section() {
 
 // FULL ROPA-1998 TIMELINE ENGINE
 const eligibleFor18YScaleChange98 = [1700, 2600, 3900, 4100];
-function computeRopa98Timeline(doj, optionDate, scaleKey, initialBasicPay, endDate, lwpDays, lwpFromDate) {
+function computeRopa98Timeline(doj, optionDate, scaleKey, initialBasicPay, endDate) {
     let ladder = matrixData98[scaleKey] || [];
     let currentScaleKey = scaleKey;
     let events = [];
     function pushEvent(dateObj, data) { events.push({ date: new Date(dateObj), ...data }); }
 
-    const hasLwp = lwpDays > 0 && lwpFromDate instanceof Date && !isNaN(lwpFromDate);
-    function applyLwpShift(d) {
-        if (hasLwp && d >= lwpFromDate) {
-            let shifted = new Date(d);
-            shifted.setDate(shifted.getDate() + lwpDays);
-            return shifted;
-        }
-        return d;
-    }
-
     pushEvent(optionDate, { label: "DOA / PAY FIXATION", isInitial: true });
     const optionMonth = optionDate.getMonth();
+    const optionDay = optionDate.getDate();
     const isEligible18Y = eligibleFor18YScaleChange98.includes(scaleKey);
 
+    // 10Y / 18Y / 20Y CAS MILESTONES: Normal Completion Date + Cumulative LWP Days
     let milestoneDefs = [
-        { d: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS - ADDL. INCREMENT", type: "10Y" },
-        { d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS - SCALE CHANGE", type: "18Y" },
-        { d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS - ADDL. INCREMENT", type: "20Y" }
+        { orig: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS - ADDL. INCREMENT", type: "10Y" },
+        { orig: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS - SCALE CHANGE", type: "18Y" },
+        { orig: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS - ADDL. INCREMENT", type: "20Y" }
     ];
+
     if (!isEligible18Y) milestoneDefs = milestoneDefs.filter(m => m.type !== "18Y");
-    milestoneDefs = milestoneDefs.map(m => ({ ...m, d: applyLwpShift(m.d) })).filter(m => m.d >= optionDate && m.d <= endDate);
-    milestoneDefs.forEach(m => pushEvent(m.d, { label: m.name, isMilestone: true, milestoneType: m.type }));
 
-    function vestingExtendedNextDate(milestoneDate) {
-        const y = milestoneDate.getFullYear() + 1, m = milestoneDate.getMonth(), d = milestoneDate.getDate();
-        if (d === 1) return new Date(y, m, 1);
-        const vestEnd = new Date(y, m + 1, 0);
-        const next = new Date(vestEnd);
-        next.setDate(next.getDate() + 1);
-        return next;
-    }
+    milestoneDefs.forEach(m => {
+        let lwpDays = getCumulativeLwpDaysUpTo(m.orig);
+        let effDate = new Date(m.orig);
+        if (lwpDays > 0) effDate.setDate(effDate.getDate() + lwpDays);
 
+        if (effDate >= optionDate && effDate <= endDate) {
+            pushEvent(effDate, { label: m.name + (lwpDays > 0 ? ` (Deferred by ${lwpDays} days LWP)` : ''), isMilestone: true, milestoneType: m.type });
+        }
+    });
+
+    // ROPA-1998 ANNUAL INCREMENTS: Shifted day-for-day for cycle with LWP, subsequent revert to Option Month/Day
     let loopYear = optionDate.getFullYear() + 1;
     while (loopYear <= endDate.getFullYear() + 1) {
-        let normalCycleDate = new Date(loopYear, optionMonth, 1);
-        let priorCycleDate = new Date(loopYear - 1, optionMonth, 1);
-        let interveningMilestone = milestoneDefs.find(m => m.d >= priorCycleDate && m.d < normalCycleDate);
-        let incrementDate;
-        if (interveningMilestone) {
-            incrementDate = vestingExtendedNextDate(interveningMilestone.d);
-            if (incrementDate < normalCycleDate) incrementDate = applyLwpShift(normalCycleDate);
-        } else {
-            incrementDate = applyLwpShift(normalCycleDate);
+        let normalCycleDate = new Date(loopYear, optionMonth, optionDay);
+        let cycleStart = new Date(loopYear - 1, optionMonth, optionDay);
+        let cycleEnd = new Date(loopYear, optionMonth, optionDay - 1);
+
+        let lwpInCycleDays = 0;
+        discreteLwpList.forEach(item => {
+            if (item.type === 'other' && item.start) {
+                let s = new Date(item.start + 'T00:00:00');
+                if (s >= cycleStart && s <= cycleEnd) {
+                    lwpInCycleDays += item.days;
+                }
+            }
+        });
+
+        let effIncDate = new Date(normalCycleDate);
+        if (lwpInCycleDays > 0) {
+            effIncDate.setDate(effIncDate.getDate() + lwpInCycleDays);
         }
-        if (incrementDate >= optionDate && incrementDate <= endDate) {
-            pushEvent(incrementDate, { label: "INCREMENT", isAnnual: true });
+
+        if (effIncDate >= optionDate && effIncDate <= endDate) {
+            pushEvent(effIncDate, { label: "INCREMENT" + (lwpInCycleDays > 0 ? ` (Deferred by ${lwpInCycleDays} days LWP)` : ''), isAnnual: true });
         }
         loopYear++;
     }
@@ -1209,9 +1297,6 @@ function computeRopa98Timeline(doj, optionDate, scaleKey, initialBasicPay, endDa
 
     events.forEach(ev => {
         let remarksText = ev.label;
-        if (hasLwp && ev.date >= lwpFromDate) {
-            remarksText += ` (Deferred by ${lwpDays} days LWP w.e.f. ${formatDate(lwpFromDate)})`;
-        }
 
         if (ev.isAnnual) {
             if (idx < ladder.length - 1) idx += 1;
@@ -1264,12 +1349,11 @@ function getRopa98SnapshotAsOf(rows, initialBasicPay, asOfDate) {
 }
 
 // FULL ROPA-2009 TIMELINE ENGINE
-function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate, lwpType, lwpStart, lwpEnd) {
+function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate) {
     let events = [];
     function pushEvent(dateObj, data) { events.push({ date: new Date(dateObj), ...data }); }
 
     pushEvent(optionDate, { label: "DOA / PAY REVISION", isInitial: true, exactMilestoneDate: optionDate });
-    const lwpEffect = computeLwpEffect(lwpType, lwpStart, lwpEnd);
 
     let firstIncrementYear = optionDate.getFullYear();
     let optionDay = optionDate.getDate();
@@ -1280,16 +1364,30 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
     let loopYear = firstIncrementYear;
     while (loopYear <= endDate.getFullYear()) {
         let julDate = new Date(loopYear, 6, 1);
-        if (lwpEffect && lwpEffect.affectedYear === loopYear) {
-            if (lwpEffect.skip) {
-                loopYear++;
-                continue;
+        let cycleStart = new Date(loopYear - 1, 6, 1);
+        let cycleEnd = new Date(loopYear, 5, 30);
+        let lwpInCycleDays = 0;
+        discreteLwpList.forEach(item => {
+            if (item.type === 'other' && item.start) {
+                let s = new Date(item.start + 'T00:00:00');
+                if (s >= cycleStart && s <= cycleEnd) {
+                    lwpInCycleDays += item.days;
+                }
             }
-            if (julDate >= optionDate && julDate <= endDate) {
-                pushEvent(lwpEffect.financialDate, { label: "INCREMENT", isAnnual: true, isLwpDeferred: true, notionalDate: julDate });
-            }
-        } else if (julDate >= optionDate && julDate <= endDate) {
-            pushEvent(julDate, { label: "INCREMENT", isAnnual: true });
+        });
+
+        // ROPA-2009 INCREMENT RULE: < 30 days = No deferral. 30-59 days = 1 month, 60-89 days = 2 months, etc.
+        let effIncDate = julDate;
+        let monthsToDefer = Math.floor(lwpInCycleDays / 30);
+        if (monthsToDefer > 0) {
+            effIncDate = new Date(loopYear, 6 + monthsToDefer, 1);
+        }
+
+        if (effIncDate >= optionDate && effIncDate <= endDate) {
+            pushEvent(effIncDate, { 
+                label: "INCREMENT" + (monthsToDefer > 0 ? ` (Deferred by ${monthsToDefer} month(s) due to ${lwpInCycleDays} days LWP)` : ''), 
+                isAnnual: true 
+            });
         }
         loopYear++;
     }
@@ -1297,22 +1395,18 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
     const isExcludedFrom18Y = [4700, 4800, 5400].includes(gpInput);
     const eligibleFor18YScaleChange = [1700, 2600, 3900, 4100].includes(gpInput);
 
-    [ {d: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS"},
-      {d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
-      {d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
+    // 10Y / 18Y / 20Y CAS MILESTONES: Normal Completion Date + Cumulative LWP Days
+    [ {orig: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS"},
+      {orig: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
+      {orig: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
+        let lwpDays = getCumulativeLwpDaysUpTo(milestone.orig);
+        let effDate = new Date(milestone.orig);
+        if (lwpDays > 0) effDate.setDate(effDate.getDate() + lwpDays);
+
         if (milestone.name === "18 YEARS" && isExcludedFrom18Y) return;
-        if (milestone.d >= optionDate && milestone.d <= endDate) {
-            let win = checkWindow(milestone.d);
-            if (win === 'A') {
-                let targetJul = new Date(milestone.d.getFullYear(), 6, 1);
-                if (lwpEffect && lwpEffect.affectedYear === targetJul.getFullYear() && !lwpEffect.skip) {
-                    pushEvent(lwpEffect.financialDate, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A', isLwpDeferred: true, notionalDate: targetJul });
-                } else {
-                    pushEvent(targetJul, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A' });
-                }
-            } else {
-                pushEvent(milestone.d, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'B' });
-            }
+        if (effDate >= optionDate && effDate <= endDate) {
+            let win = checkWindow(effDate);
+            pushEvent(effDate, { label: milestone.name + (lwpDays > 0 ? ` (Deferred by ${lwpDays} days LWP)` : ''), isMilestone: true, exactMilestoneDate: effDate, win });
         }
     });
 
@@ -1335,10 +1429,6 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
         let existingGp = runningGp;
         let incAmt = 0;
         let remarksText = ev.label;
-        if (ev.isLwpDeferred) {
-            remarksText += ` (Financial benefit deferred w.e.f. ${formatDate(ev.date)} due to LWP)`;
-        }
-        let lwpNote = ev.isLwpDeferred ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (G.O. 181-SE(B) Dt. 8.10.2009)</span><span>Notional date ${formatDate(ev.notionalDate)}; benefit deferred to ${formatDate(ev.date)}</span></div>` : '';
 
         if (ev.isInitial) {
             // seed row
@@ -1346,11 +1436,10 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
             incAmt = calculate09Increment(runningBandPay, runningGp);
             runningBandPay += incAmt;
             runningBasicPay = runningBandPay + runningGp;
-            if (ev.isLwpDeferred) slipBlockHTML = `<div class="slip-box">${lwpNote}</div>`;
         } else if (ev.isMilestone) {
             incAmt = calculate09Increment(runningBandPay, runningGp);
             runningBandPay += incAmt;
-            if (ev.label === "18 YEARS" && eligibleFor18YScaleChange && promoMap09[runningGp]) {
+            if (ev.label.startsWith("18 YEARS") && eligibleFor18YScaleChange && promoMap09[runningGp]) {
                 runningGp = promoMap09[runningGp];
             }
             runningBasicPay = runningBandPay + runningGp;
@@ -1361,7 +1450,6 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
                     <div class="slip-row"><span>2.a) Allowed Normal Increment</span><span>${ev.win === 'A' ? 'Stacked July' : 'Nil'}</span></div>
                     <div class="slip-row"><span>&nbsp;&nbsp;&nbsp;b) Additional Increment for ${ev.label} Service</span><span>Rs. ${incAmt.toLocaleString('en-IN')}</span></div>
                     <div class="slip-row"><span class="slip-bold">&nbsp;&nbsp;&nbsp;c) Pay Fixed w.e.f ${formatDate(ev.date)}</span><span class="slip-bold">Rs. ${runningBasicPay.toLocaleString('en-IN')}</span></div>
-                    ${lwpNote}
                 </div>`;
         }
 
@@ -1396,12 +1484,11 @@ function getRopa09SnapshotAsOf(rows, initialGp, initialBandPay, asOfDate) {
 }
 
 // FULL ROPA-2019 TIMELINE ENGINE
-function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, dor, lwpType, lwpStart, lwpEnd) {
+function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, dor) {
     let events = [];
     function pushEvent(dateObj, data) { events.push({ date: new Date(dateObj), ...data }); }
 
     pushEvent(startDate, { label: "ROPA-19 OPTION / FITMENT", isInitial: true, exactMilestoneDate: startDate });
-    const lwpEffect = computeLwpEffect(lwpType, lwpStart, lwpEnd);
 
     let firstIncrementYear = startDate.getFullYear();
     let optionDay = startDate.getDate();
@@ -1412,16 +1499,30 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
     let loopYear = firstIncrementYear;
     while (loopYear <= dor.getFullYear()) {
         let julDate = new Date(loopYear, 6, 1);
-        if (lwpEffect && lwpEffect.affectedYear === loopYear) {
-            if (lwpEffect.skip) {
-                loopYear++;
-                continue;
+        let cycleStart = new Date(loopYear - 1, 6, 1);
+        let cycleEnd = new Date(loopYear, 5, 30);
+        let lwpInCycleDays = 0;
+        discreteLwpList.forEach(item => {
+            if (item.type === 'other' && item.start) {
+                let s = new Date(item.start + 'T00:00:00');
+                if (s >= cycleStart && s <= cycleEnd) {
+                    lwpInCycleDays += item.days;
+                }
             }
-            if (julDate >= startDate && julDate <= dor) {
-                pushEvent(lwpEffect.financialDate, { label: "INCREMENT", isAnnual: true, isLwpDeferred: true, notionalDate: julDate });
-            }
-        } else if (julDate >= startDate && julDate <= dor) {
-            pushEvent(julDate, { label: "INCREMENT", isAnnual: true });
+        });
+
+        // ROPA-2019 INCREMENT RULE: < 30 days = No deferral. 30-59 days = 1 month, 60-89 days = 2 months, etc.
+        let effIncDate = julDate;
+        let monthsToDefer = Math.floor(lwpInCycleDays / 30);
+        if (monthsToDefer > 0) {
+            effIncDate = new Date(loopYear, 6 + monthsToDefer, 1);
+        }
+
+        if (effIncDate >= startDate && effIncDate <= dor) {
+            pushEvent(effIncDate, { 
+                label: "INCREMENT" + (monthsToDefer > 0 ? ` (Deferred by ${monthsToDefer} month(s) due to ${lwpInCycleDays} days LWP)` : ''), 
+                isAnnual: true 
+            });
         }
         loopYear++;
     }
@@ -1429,22 +1530,18 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
     const isExcludedFrom18Y = [4700, 4800, 5400].includes(gpInput);
     const eligibleFor18YScaleChange = [1700, 2600, 3900, 4100].includes(gpInput);
 
-    [ {d: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS"},
-      {d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
-      {d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
+    // 10Y / 18Y / 20Y CAS MILESTONES: Normal Completion Date + Cumulative LWP Days
+    [ {orig: new Date(doj.getFullYear() + 10, doj.getMonth(), doj.getDate()), name: "10 YEARS"},
+      {orig: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
+      {orig: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
+        let lwpDays = getCumulativeLwpDaysUpTo(milestone.orig);
+        let effDate = new Date(milestone.orig);
+        if (lwpDays > 0) effDate.setDate(effDate.getDate() + lwpDays);
+
         if (milestone.name === "18 YEARS" && isExcludedFrom18Y) return;
-        if (milestone.d >= startDate && milestone.d <= dor) {
-            let win = checkWindow(milestone.d);
-            if (win === 'A') {
-                let targetJul = new Date(milestone.d.getFullYear(), 6, 1);
-                if (lwpEffect && lwpEffect.affectedYear === targetJul.getFullYear() && !lwpEffect.skip) {
-                    pushEvent(lwpEffect.financialDate, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A', isLwpDeferred: true, notionalDate: targetJul });
-                } else {
-                    pushEvent(targetJul, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A' });
-                }
-            } else {
-                pushEvent(milestone.d, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'B' });
-            }
+        if (effDate >= startDate && effDate <= dor) {
+            let win = checkWindow(effDate);
+            pushEvent(effDate, { label: milestone.name + (lwpDays > 0 ? ` (Deferred by ${lwpDays} days LWP)` : ''), isMilestone: true, exactMilestoneDate: effDate, win });
         }
     });
 
@@ -1468,20 +1565,15 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
         let existingBasic = runningBasicPay;
         let existingLevel = runningLevel;
         let remarksText = ev.label;
-        if (ev.isLwpDeferred) {
-            remarksText += ` (Financial benefit deferred w.e.f. ${formatDate(ev.date)} due to LWP)`;
-        }
-        let lwpNote = ev.isLwpDeferred ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (G.O. 181-SE(B) Dt. 8.10.2009)</span><span>Notional date ${formatDate(ev.notionalDate)}; benefit deferred to ${formatDate(ev.date)}</span></div>` : '';
 
         if (ev.isInitial) {
             colTrackingInfo = cellData.cell;
         } else if (ev.isAnnual) {
             runningBasicPay = matrixData19[runningLevel][cellData.index + 1] || runningBasicPay;
             colTrackingInfo = findCell19(runningLevel, runningBasicPay).cell;
-            if (ev.isLwpDeferred) slipBlockHTML = `<div class="slip-box">${lwpNote}</div>`;
         } else if (ev.isMilestone) {
             let postMilestone = matrixData19[runningLevel][cellData.index + 1] || runningBasicPay;
-            if (ev.label === "18 YEARS" && eligibleFor18YScaleChange) {
+            if (ev.label.startsWith("18 YEARS") && eligibleFor18YScaleChange) {
                 let nextGpKey = promoMap19[runningGp] || runningGp;
                 runningLevel = levelMap19[nextGpKey] || runningLevel;
                 runningGp = nextGpKey;
@@ -1498,7 +1590,6 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
                     <div class="slip-row"><span class="slip-bold">1. Existing Pay Matrix Cell Row on ${formatDate(ev.exactMilestoneDate)}</span><span>Rs. ${existingBasic.toLocaleString('en-IN')} (L-${existingLevel})</span></div>
                     <div class="slip-row"><span>2. Additional Step cell upgrade added for ${ev.label} Service</span><span>Rs. ${(postMilestone - existingBasic).toLocaleString('en-IN')}</span></div>
                     <div class="slip-row"><span class="slip-bold">3. Final Matrix Fitment Entry w.e.f ${formatDate(ev.date)}</span><span class="slip-bold">Rs. ${runningBasicPay.toLocaleString('en-IN')} (${finalCellInfo.cell})</span></div>
-                    ${lwpNote}
                 </div>`;
         }
 
@@ -1561,12 +1652,10 @@ function renderRows(tbodyId, sbTbodyId, rows) {
     });
 }
 
-// UNIFIED PAY SNAPSHOT LOOKUP ACROSS ALL THREE ROPA ERAS
 function getAdmissibleSnapshotForDate(d) {
     const enable98 = document.getElementById('enableRopa98').checked;
     const enable09 = document.getElementById('enableRopa09').checked;
 
-    // 1. ROPA 1998 Era (Up to 31.03.2009 Cutoff)
     if (enable98 && window.pfTimeline98 && window.pfTimeline98.length > 0 && d <= new Date(2009, 2, 31)) {
         let applicable = window.pfTimeline98[0];
         for (let r of window.pfTimeline98) {
@@ -1574,16 +1663,8 @@ function getAdmissibleSnapshotForDate(d) {
             else break;
         }
         const bVal = parseInt(String(applicable.basicDisplay || applicable.snapBasicPay || 0).replace(/,/g,''), 10) || 0;
-        return {
-            era: 'ROPA-98',
-            band: 'PB-4',
-            scale: applicable.scaleStr || 'OLD SCALE',
-            payBand: bVal,
-            gradePay: 0,
-            revBasic: bVal
-        };
+        return { era: 'ROPA-98', band: 'PB-4', scale: applicable.scaleStr || 'OLD SCALE', payBand: bVal, gradePay: 0, revBasic: bVal };
     }
-    // 2. ROPA 2009 Era (01.04.2009 to 31.12.2019)
     else if (enable09 && window.pfTimeline09 && window.pfTimeline09.length > 0 && d <= new Date(2019, 11, 31)) {
         let applicable = window.pfTimeline09[0];
         for (let r of window.pfTimeline09) {
@@ -1592,16 +1673,8 @@ function getAdmissibleSnapshotForDate(d) {
         }
         const bp = applicable.snapBandPay || 0;
         const gp = applicable.snapGp || 0;
-        return {
-            era: 'ROPA-09',
-            band: pbMap09[gp] || 'PB-4',
-            scale: `${pbMap09[gp] || 'PB-4'}:${gp}`,
-            payBand: bp,
-            gradePay: gp,
-            revBasic: bp + gp
-        };
+        return { era: 'ROPA-09', band: pbMap09[gp] || 'PB-4', scale: `${pbMap09[gp] || 'PB-4'}:${gp}`, payBand: bp, gradePay: gp, revBasic: bp + gp };
     }
-    // 3. ROPA 2019 Era (From 01.01.2020 onwards)
     else if (window.pfTimeline19 && window.pfTimeline19.length > 0) {
         let applicable = window.pfTimeline19[0];
         for (let r of window.pfTimeline19) {
@@ -1609,19 +1682,11 @@ function getAdmissibleSnapshotForDate(d) {
             else break;
         }
         const bVal = parseInt(String(applicable.basicDisplay || applicable.snapBasicPay || 0).replace(/,/g,''), 10) || 0;
-        return {
-            era: 'ROPA-19',
-            band: pbMap19[applicable.snapGp] || 'LEVEL-12',
-            scale: applicable.scaleStr || 'LEVEL-12',
-            payBand: bVal,
-            gradePay: 0,
-            revBasic: bVal
-        };
+        return { era: 'ROPA-19', band: pbMap19[applicable.snapGp] || 'LEVEL-12', scale: applicable.scaleStr || 'LEVEL-12', payBand: bVal, gradePay: 0, revBasic: bVal };
     }
     return null;
 }
 
-// COMPLETE TIMELINE GENERATOR MAIN FUNCTION
 function processFixationTimeline() {
     const dojInput = val('doj');
     const dor = getDOR();
@@ -1635,21 +1700,13 @@ function processFixationTimeline() {
     const enableRopa98 = document.getElementById('enableRopa98').checked;
     const enableRopa09 = document.getElementById('enableRopa09').checked;
 
-    // UNIFIED LWP READINGS
-    const unifiedLwpType = val('unifiedLwpType');
-    const unifiedLwpStartInput = val('unifiedLwpStart');
-    const unifiedLwpEndInput = val('unifiedLwpEnd');
-    const unifiedLwpStart = unifiedLwpStartInput ? new Date(unifiedLwpStartInput) : null;
-    const unifiedLwpEnd = unifiedLwpEndInput ? new Date(unifiedLwpEndInput) : null;
-    const unifiedLwpDays = parseInt(val('unifiedLwpDays'), 10) || 0;
-
     let ropa98Rows = [];
     let ropa09Rows = [];
     let carryGp, carryBasic, carryLevel;
     let carryNote = "";
     let carryNote98 = "";
 
-    // Phase 1: ROPA-1998 (Up to 31.03.2009 Cutoff)
+    // Phase 1: ROPA-1998
     let ropa09InitialGp, ropa09InitialBand, ropa09HasCarry = false;
     if (enableRopa98) {
         const ropa98OptionInput = val('ropa98OptionDate');
@@ -1659,7 +1716,7 @@ function processFixationTimeline() {
         const ropa98OptionDate = new Date(ropa98OptionInput);
         const ropa98EndDate = dor < ROPA98_CUTOFF ? dor : ROPA98_CUTOFF;
 
-        const result98 = computeRopa98Timeline(doj, ropa98OptionDate, ropa98Scale, ropa98BasicPay, ropa98EndDate, unifiedLwpDays, unifiedLwpStart);
+        const result98 = computeRopa98Timeline(doj, ropa98OptionDate, ropa98Scale, ropa98BasicPay, ropa98EndDate);
         ropa98Rows = result98.rows;
 
         const ropa09OptionInputForSnap = val('ropa09OptionDate');
@@ -1679,7 +1736,7 @@ function processFixationTimeline() {
             ` Pay in Pay Band + Grade Pay Rs. ${ropa09InitialGp.toLocaleString('en-IN')} = Total Rs. ${(ropa09InitialBand + ropa09InitialGp).toLocaleString('en-IN')}.`;
     }
 
-    // Phase 2: ROPA-2009 (01.04.2009 to 31.12.2019)
+    // Phase 2: ROPA-2009
     if (enableRopa09) {
         const ropa09OptionInput = val('ropa09OptionDate');
         let ropa09Gp = ropa09HasCarry ? ropa09InitialGp : parseInt(val('ropa09GradePay'), 10);
@@ -1688,7 +1745,7 @@ function processFixationTimeline() {
         const ropa09OptionDate = new Date(ropa09OptionInput);
         const ropa09EndDate = dor < ROPA09_CUTOFF ? dor : ROPA09_CUTOFF;
 
-        const result09 = computeRopa09Timeline(doj, ropa09OptionDate, ropa09Gp, ropa09BandPay, ropa09EndDate, unifiedLwpType, unifiedLwpStart, unifiedLwpEnd);
+        const result09 = computeRopa09Timeline(doj, ropa09OptionDate, ropa09Gp, ropa09BandPay, ropa09EndDate);
         ropa09Rows = result09.rows;
 
         const snap = getRopa09SnapshotAsOf(ropa09Rows, ropa09Gp, ropa09BandPay, ropa19OptionDate);
@@ -1709,8 +1766,8 @@ function processFixationTimeline() {
         carryNote = `<strong>Manual Entry:</strong> ROPA-2019 fixation starts at Rs. ${carryBasic.toLocaleString('en-IN')} (GP Rs. ${carryGp.toLocaleString('en-IN')}, Level-${carryLevel}) as on ${formatDate(ropa19OptionDate)}.`;
     }
 
-    // Phase 3: ROPA-2019 (From 01.01.2020)
-    const result19 = computeRopa19Timeline(doj, ropa19OptionDate, carryGp, carryLevel, carryBasic, dor, unifiedLwpType, unifiedLwpStart, unifiedLwpEnd);
+    // Phase 3: ROPA-2019
+    const result19 = computeRopa19Timeline(doj, ropa19OptionDate, carryGp, carryLevel, carryBasic, dor);
 
     document.getElementById('carryForwardOutput98').style.display = enableRopa98 ? '' : 'none';
     document.getElementById('carryForwardOutput98').innerHTML = carryNote98;
@@ -1814,12 +1871,7 @@ function generateArrearTable() {
             }
         }
 
-        arrearRows.push({
-            y, m,
-            admBasic, drBasic,
-            admGPF: defGpf, drGPF: defGpf,
-            admIT: defIt, drIT: defIt
-        });
+        arrearRows.push({ y, m, admBasic, drBasic, admGPF: defGpf, drGPF: defGpf, admIT: defIt, drIT: defIt });
         curr.setMonth(curr.getMonth() + 1);
     }
     renderDashboardTable();
@@ -1960,7 +2012,7 @@ function updateAll() {
     if (document.getElementById('box_period')) document.getElementById('box_period').innerText = period;
 }
 
-// ==================== TAB 2: OVER DRAWN ENGINE & ERA-AWARE AUTO-REF ("REF ADDED") ====================
+// OVER DRAWN SALARY ENGINE
 let odRows = [];
 let odSeq = 0;
 
@@ -1981,7 +2033,6 @@ function seedDefaultOverdrawnRows() {
     ];
 }
 
-// ERA-AWARE AUTO SYNC OVERDRAWN FROM GENERATED PAY TABLES ("REF ADDED")
 function autoSyncOverdrawnFromTab1() {
     if (!window.pfTimeline19 || window.pfTimeline19.length === 0) {
         processFixationTimeline();
@@ -1990,7 +2041,6 @@ function autoSyncOverdrawnFromTab1() {
 
     let fetched = [];
 
-    // 1. Check if current arrearRows has overdrawn months (Drawn > Admissible)
     arrearRows.forEach(r => {
         let monthDate = new Date(r.y, r.m - 1, 1);
         let snap = getAdmissibleSnapshotForDate(monthDate);
@@ -2006,7 +2056,7 @@ function autoSyncOverdrawnFromTab1() {
             fetched.push({
                 id: ++odSeq, month: mStr, band: admBand, scale: admScale,
                 drPayBand: r.drBasic - 4100 > 0 ? r.drBasic - 4100 : r.drBasic,
-                drGradePay: 4100, // DEFAULT DRAWN GRADE PAY = 4100
+                drGradePay: 4100,
                 drDP: 0, drDA: c.drDA, drHRA: c.drHRA, drMA: 300, drIR: 0,
                 admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: c.admDA, admHRA: c.admHRA, admMA: 290, admIR: 0,
                 remarks: `Ref Generated Table [${snap ? snap.era : 'ROPA'}]: Overdrawn by Rs. ${(c.drGross - c.admGross).toLocaleString('en-IN')}`
@@ -2021,91 +2071,69 @@ function autoSyncOverdrawnFromTab1() {
         return;
     }
 
-    // 2. Prompt user for Overdrawn / LWP Period range
-    const uLwpStart = val('unifiedLwpStart');
-    const uLwpEnd = val('unifiedLwpEnd');
+    let userRange = prompt(
+        "Enter the date range in YYYY-MM format to scan and auto-generate overdrawn salary rows:\nFormat: START_MONTH, END_MONTH (e.g. 2010-11, 2011-01)",
+        "2010-11, 2011-01"
+    );
+    if (userRange) {
+        let parts = userRange.split(',').map(s => s.trim());
+        if (parts.length === 2 && parts[0] && parts[1]) {
+            let scanStartStr = parts[0] + "-01";
+            let [ey, em] = parts[1].split('-').map(Number);
+            let scanEndStr = `${ey}-${String(em).padStart(2,'0')}-${daysInMonth(ey, em)}`;
 
-    let scanStartStr = uLwpStart;
-    let scanEndStr = uLwpEnd;
+            let sDate = new Date(scanStartStr + 'T00:00:00');
+            let eDate = new Date(scanEndStr + 'T00:00:00');
+            let curr = new Date(sDate.getFullYear(), sDate.getMonth(), 1);
+            let endM = new Date(eDate.getFullYear(), eDate.getMonth(), 1);
 
-    if (!scanStartStr || !scanEndStr) {
-        let userRange = prompt(
-            "Tab 1 Section 7 range is currently set to an Arrear period (Admissible > Drawn).\n\n" +
-            "To auto-generate Overdrawn Salary for an LWP or excess-drawal period, enter the date range in YYYY-MM format:\n" +
-            "Format: START_MONTH, END_MONTH (e.g. 2010-11, 2011-01)",
-            "2010-11, 2011-01"
-        );
-        if (userRange) {
-            let parts = userRange.split(',').map(s => s.trim());
-            if (parts.length === 2 && parts[0] && parts[1]) {
-                scanStartStr = parts[0] + "-01";
-                let [ey, em] = parts[1].split('-').map(Number);
-                let lastD = daysInMonth(ey, em);
-                scanEndStr = `${ey}-${String(em).padStart(2,'0')}-${lastD}`;
+            fetched = [];
+            while (curr <= endM) {
+                let y = curr.getFullYear(), m = curr.getMonth() + 1;
+                let mStr = `${y}-${String(m).padStart(2,'0')}`;
+                let tDays = daysInMonth(y, m);
+                let monthDate = new Date(y, m - 1, 1);
+                let snap = getAdmissibleSnapshotForDate(monthDate);
+
+                let fullPB = snap ? snap.payBand : 11640;
+                let fullGP = snap ? snap.gradePay : 4800;
+                let scaleStr = snap ? snap.scale : '9000-40500';
+                let bandStr = snap ? snap.band : 'PB-4';
+
+                let lwpDaysInMonth = 1;
+                let admDays = tDays - lwpDaysInMonth;
+                let admPB = Math.round((fullPB * admDays) / tDays);
+                let admGP = Math.round((fullGP * admDays) / tDays);
+                let admBasic = admPB + admGP;
+                let drBasic = fullPB + fullGP;
+
+                let daR = (mStr >= "2011-01") ? 0.35 : 0.27;
+                let drDA = Math.round(drBasic * daR);
+                let drHRA = Math.round(drBasic * 0.12);
+                let admDA = Math.round(admBasic * daR);
+                let admHRA = Math.round(admBasic * 0.12);
+
+                fetched.push({
+                    id: ++odSeq, month: mStr, band: bandStr, scale: scaleStr,
+                    drPayBand: fullPB, drGradePay: 4100,
+                    drDP: 0, drDA: drDA, drHRA: drHRA, drMA: 300, drIR: 0,
+                    admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: Math.round(300 * admDays / tDays), admIR: 0,
+                    remarks: `Pay admissible for ${admDays} days\nDue to LWP`
+                });
+
+                curr.setMonth(curr.getMonth() + 1);
+            }
+
+            if (fetched.length > 0) {
+                odRows = fetched;
+                renderOdTable();
+                alert(`Auto-generated ${fetched.length} overdrawn month row(s) referenced from ROPA Pay Table!`);
+                return;
             }
         }
     }
 
-    if (scanStartStr && scanEndStr) {
-        let sDate = new Date(scanStartStr + 'T00:00:00');
-        let eDate = new Date(scanEndStr + 'T00:00:00');
-        let curr = new Date(sDate.getFullYear(), sDate.getMonth(), 1);
-        let endM = new Date(eDate.getFullYear(), eDate.getMonth(), 1);
-
-        fetched = [];
-        while (curr <= endM) {
-            let y = curr.getFullYear(), m = curr.getMonth() + 1;
-            let mStr = `${y}-${String(m).padStart(2,'0')}`;
-            let tDays = daysInMonth(y, m);
-            let monthDate = new Date(y, m - 1, 1);
-            let snap = getAdmissibleSnapshotForDate(monthDate);
-
-            let fullPB = snap ? snap.payBand : 11640;
-            let fullGP = snap ? snap.gradePay : 4800;
-            let scaleStr = snap ? snap.scale : '9000-40500';
-            let bandStr = snap ? snap.band : 'PB-4';
-
-            let lwpDaysInMonth = 0;
-            for (let d = 1; d <= tDays; d++) {
-                let checkD = new Date(y, m - 1, d);
-                if (checkD >= sDate && checkD <= eDate) lwpDaysInMonth++;
-            }
-            if (lwpDaysInMonth === 0) lwpDaysInMonth = 1;
-
-            let admDays = tDays - lwpDaysInMonth;
-            let admPB = Math.round((fullPB * admDays) / tDays);
-            let admGP = Math.round((fullGP * admDays) / tDays);
-            let admBasic = admPB + admGP;
-            let drBasic = fullPB + fullGP;
-
-            let daR = (mStr >= "2011-01") ? 0.35 : 0.27;
-            let hraR = 0.12;
-
-            let drDA = Math.round(drBasic * daR);
-            let drHRA = Math.round(drBasic * hraR);
-            let admDA = Math.round(admBasic * daR);
-            let admHRA = Math.round(admBasic * hraR);
-
-            fetched.push({
-                id: ++odSeq, month: mStr, band: bandStr, scale: scaleStr,
-                drPayBand: fullPB, drGradePay: 4100, // DEFAULT DRAWN GRADE PAY = 4100
-                drDP: 0, drDA: drDA, drHRA: drHRA, drMA: 300, drIR: 0,
-                admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: Math.round(300 * admDays / tDays), admIR: 0,
-                remarks: `Pay admissible for ${admDays} days\nDue to ${String(lwpDaysInMonth).padStart(2,'0')} day(s) LWP`
-            });
-
-            curr.setMonth(curr.getMonth() + 1);
-        }
-
-        if (fetched.length > 0) {
-            odRows = fetched;
-            renderOdTable();
-            alert(`Auto-generated ${fetched.length} overdrawn month row(s) referenced from ROPA Pay Table for range (${scanStartStr} to ${scanEndStr})!`);
-            return;
-        }
-    }
-
-    alert("No overdrawn months detected. Please set the Arrear/Overdrawn range in Tab 1 Section 7, or enter LWP Start/End dates in Section 2.");
+    alert("No overdrawn months detected. Please verify your ROPA Pay Fixation or input dates.");
 }
 
 function addOverdrawnRow() {
@@ -2125,7 +2153,7 @@ function addOverdrawnRow() {
     let bandStr = snap ? snap.band : 'PB-4';
     let scaleStr = snap ? snap.scale : '9000-40500';
 
-    let defaultDrGP = 4100; // DEFAULT DRAWN GRADE PAY = 4100
+    let defaultDrGP = 4100;
     let defaultDrPB = 11640;
 
     let daPct = (m >= "2011-01") ? 0.35 : 0.27;
@@ -2251,7 +2279,7 @@ function refreshAllOverdrawn() {
 
 function printStatement() {
     if (odRows.length === 0) { alert('Add at least one month row first.'); return; }
-    setPrintOrientation('landscape'); // OD SHEET -> A4 LANDSCAPE
+    setPrintOrientation('landscape');
     const sums = window._odSums || {};
     let rowsHtml = '';
     odRows.forEach((row, idx) => {
@@ -2305,7 +2333,7 @@ function printStatement() {
 }
 
 function printChallan() {
-    setPrintOrientation('portrait'); // T.R. FORM NO. 7 CHALLAN -> A4 PORTRAIT
+    setPrintOrientation('portrait');
     const sums = window._odSums || { overDrawn: 0 };
     const amount = sums.overDrawn || 0;
     const particulars = `Over drawn amount Refund by ${val('odEmpName')} ; ${val('odEmpDesig')} ${val('odSchoolName')} ; due to ${val('reasonText')}`;
@@ -2608,9 +2636,9 @@ function docAnnex() {
 function showDoc(type) {
     let content = "";
     if (type === 'annex1' || type === 'annex') {
-        setPrintOrientation('landscape'); // LANDSCAPE PAGE SETUP
+        setPrintOrientation('landscape');
     } else {
-        setPrintOrientation('portrait');  // PORTRAIT PAGE SETUP
+        setPrintOrientation('portrait');
     }
 
     if (type === 'annex1') content = document.getElementById('annex1VisualCard').outerHTML;
@@ -2654,7 +2682,7 @@ function showDoc(type) {
 }
 
 function printServiceBook() {
-    setPrintOrientation('portrait'); // SERVICE BOOK SHEET -> A4 PORTRAIT
+    setPrintOrientation('portrait');
     window.print();
 }
 
@@ -2732,6 +2760,7 @@ async function exportOverdrawnExcel() {
 
 window.addEventListener('DOMContentLoaded', function () {
     calculateDOR();
+    renderDiscreteLwpTable();
     toggleRopa09Section();
     generateArrearTable();
     seedDefaultOverdrawnRows();
