@@ -291,6 +291,20 @@
     .chl-sig-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 35px; text-align: center; font-size: 0.8rem; }
     .chl-sig-grid div { border-top: 1px solid #000; padding-top: 4px; margin-top: 30px; }
     .chl-note { font-size: 0.7rem; margin-top: 16px; }
+    /* T.R. FORM NO.-7 (plain reference-matched layout) */
+    .chl-wrap-plain { font-family: 'Times New Roman', Times, serif; color: #000; padding: 10px 16px; font-size: 0.92rem; }
+    .chl-title-main { text-align: center; font-weight: bold; font-size: 1.15rem; }
+    .chl-title-sub { text-align: center; font-style: italic; font-size: 0.85rem; margin-top: 2px; }
+    .chl-title-heading { text-align: center; font-weight: bold; margin: 8px 0 20px; }
+    .chl-item { margin-bottom: 14px; line-height: 1.5; }
+    .chl-item.chl-indent { margin-left: 28px; margin-top: -8px; }
+    .chl-item-note { font-size: 0.78rem; text-align: center; margin: -8px 0 14px; }
+    .chl-fill { font-weight: bold; border-bottom: 1px solid #000; padding: 0 2px 1px; }
+    .chl-box-grid { display: inline-flex; gap: 4px; vertical-align: middle; }
+    .chl-box { display: inline-block; width: 22px; height: 24px; border: 1px solid #000; text-align: center; line-height: 24px; font-weight: bold; }
+    .chl-amt-box { display: inline-block; min-width: 220px; border: 1px solid #000; padding: 2px 6px; font-weight: bold; }
+    .chl-footer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px 30px; margin-top: 28px; font-size: 0.9rem; }
+    .chl-date-line { border-bottom: 1px solid #000; width: 140px; margin-top: 4px; }
 
     /* MODAL */
     .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 999; }
@@ -311,7 +325,7 @@
         #printArea { padding: 0 !important; width: 100%; box-sizing: border-box; }
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
         table { width: 100%; }
-        tr, .slip-box, .chl-sig-grid, .annex1-sig-row { page-break-inside: avoid; }
+        tr, .slip-box, .chl-sig-grid, .chl-footer-grid, .annex1-sig-row { page-break-inside: avoid; }
         #sbPrintArea, #sbPrintArea * { visibility: visible; }
         #sbPrintArea {
             display: block !important;
@@ -804,6 +818,7 @@
             <div class="fg"><label>Name of Bank &amp; Branch</label><input id="chlBank" value="P.N.B., KHATRA" onchange="refreshAllOverdrawn()"></div>
             <div class="fg"><label>Name of Treasury</label><input id="chlTreasury" value="KHATRA" onchange="refreshAllOverdrawn()"></div>
             <div class="fg"><label>Treasury Code</label><input id="chlTreasuryCode" value="B A C EDS-001" onchange="refreshAllOverdrawn()"></div>
+            <div class="fg"><label>A/C No. (Bank/Treasury Account No.)</label><input id="chlAccNo" value="" onchange="refreshAllOverdrawn()"></div>
             <div class="fg wide"><label>Account Code / Detail Head of Account (14-digit + description)</label><input id="chlHead" value="2202-EDUCATION-02-110-NP-ASSIST TO-NO-001-SECONDARY SCHOOL-70-REFUND" onchange="refreshAllOverdrawn()"></div>
             <div class="fg"><label>T.V. No. &amp; Date of A.C. Bill</label><input id="chlTvNo" value="" onchange="refreshAllOverdrawn()"></div>
             <div class="fg"><label>Challan Date</label><input type="date" id="chlDate" onchange="refreshAllOverdrawn()"></div>
@@ -1089,10 +1104,17 @@ function wholeMonthsBetween(start, end) {
     return Math.max(0, months);
 }
 
-function computeLwpEffect(lwpType, lwpStart, lwpEnd) {
+function computeLwpEffect(lwpType, lwpStart, lwpEnd, lwpDays) {
     if (lwpType !== 'other' || !(lwpStart instanceof Date) || !(lwpEnd instanceof Date) || isNaN(lwpStart) || isNaN(lwpEnd) || lwpEnd < lwpStart) {
         return null;
     }
+    // RULE (G.O. 181-SE(B) Dt. 8.10.2009): a personal LWP spell of 30 days or LESS has NO effect on
+    // the regular annual increment. Only LWP exceeding 30 days defers it - by whole month-blocks of
+    // the LWP span (a part-month spell beyond day 30 still counts as one full month of deferral,
+    // e.g. 31-59 days = 1 month, 60-89 days = 2 months, and so on).
+    let totalDays = (typeof lwpDays === 'number' && lwpDays > 0) ? lwpDays : (Math.round((lwpEnd - lwpStart) / 86400000) + 1);
+    if (totalDays <= 30) return null;
+
     // Increments/milestones under G.O. 181-SE(B) fall only on the 1st of a month, so even a short
     // (sub-month) LWP spell still pushes the affected cycle to the next month - minimum deferral = 1 month.
     let months = wholeMonthsBetween(lwpStart, lwpEnd);
@@ -1120,10 +1142,60 @@ function computeLwpEffect(lwpType, lwpStart, lwpEnd) {
 function computeLwpEffects(lwpSpells) {
     const effects = [];
     (lwpSpells || []).forEach(spell => {
-        const eff = computeLwpEffect(spell.type, spell.start, spell.end);
+        const eff = computeLwpEffect(spell.type, spell.start, spell.end, parseInt(spell.days, 10));
         if (eff) effects.push(Object.assign({}, eff, { spell: spell }));
     });
     return effects;
+}
+
+// RULE (10/18/20-Year CAS milestones under ROPA-09 & ROPA-19): unlike the regular annual increment
+// above, the CAS milestone date is deferred by the EXACT cumulative number of LWP days of every
+// spell that had already started on/before the milestone date - there is no 30-day threshold here,
+// matching the exact-day treatment already used for ROPA-98 milestones.
+function applyLwpDaysShiftToMilestone(milestoneDate, lwpSpells) {
+    let shifted = new Date(milestoneDate);
+    const applied = [];
+    (lwpSpells || [])
+        .filter(s => (parseInt(s.days, 10) || 0) > 0 && s.start instanceof Date && !isNaN(s.start))
+        .sort((a, b) => a.start - b.start)
+        .forEach(s => {
+            if (shifted >= s.start) {
+                const days = parseInt(s.days, 10) || 0;
+                shifted.setDate(shifted.getDate() + days);
+                applied.push({ start: s.start, end: (s.end instanceof Date && !isNaN(s.end)) ? s.end : s.start, days: days, remarks: s.remarks || '' });
+            }
+        });
+    return { date: shifted, applied };
+}
+
+function lwpDaysRemarkForMilestone(appliedSpells) {
+    if (!appliedSpells || appliedSpells.length === 0) return '';
+    return ' &mdash; ' + appliedSpells.map(s => `LWP (affects CAS) ${formatDate(s.start)} to ${formatDate(s.end)} [${s.days}d]`).join('; ');
+}
+
+// RULE (6-month gap): two increment-affecting events (annual increment or 10/18/20-Year milestone)
+// must not fall less than 6 months apart. If an LWP-deferred date lands closer than 6 months to the
+// next scheduled increment/milestone, the next one is itself pushed out to preserve the 6-month gap.
+function enforceSixMonthGap(events) {
+    let prevDate = null;
+    events.forEach(ev => {
+        if (!ev.isAnnual && !ev.isMilestone) return;
+        if (prevDate) {
+            let minNext = new Date(prevDate);
+            minNext.setMonth(minNext.getMonth() + 6);
+            if (ev.date < minNext) {
+                ev.date = new Date(minNext);
+                ev.sixMonthGapApplied = true;
+            }
+        }
+        prevDate = ev.date;
+    });
+    events.sort((a, b) => {
+        if (a.date.getTime() !== b.date.getTime()) return a.date - b.date;
+        if (a.isAnnual && b.isMilestone) return -1;
+        if (a.isMilestone && b.isAnnual) return 1;
+        return 0;
+    });
 }
 
 function finalizeDot(compiledRows, endDate) {
@@ -1168,31 +1240,36 @@ function computeRopa98Timeline(doj, optionDate, scaleKey, initialBasicPay, endDa
     let events = [];
     function pushEvent(dateObj, data) { events.push({ date: new Date(dateObj), ...data }); }
 
-    // DISCRETE LWP SPELLS: each one-time spell (with non-qualifying days entered) is applied ONCE,
-    // in chronological order, cumulatively deferring every subsequent 10/18/20-year & increment date.
+    // DISCRETE LWP SPELLS: LWP does NOT change the effective date of the normal annual increment.
+    // It only defers the 10/18/20-year CAS milestone dates (+LWP days, cumulatively, as usual).
     const validSpells = (lwpSpells || [])
         .filter(s => (parseInt(s.days, 10) || 0) > 0 && s.start instanceof Date && !isNaN(s.start))
-        .map(s => ({ start: s.start, days: parseInt(s.days, 10) || 0, remarks: s.remarks || '' }))
+        .map(s => ({
+            start: s.start,
+            end: (s.end instanceof Date && !isNaN(s.end)) ? s.end : s.start,
+            days: parseInt(s.days, 10) || 0,
+            remarks: s.remarks || ''
+        }))
         .sort((a, b) => a.start - b.start);
-    const hasLwp = validSpells.length > 0;
 
-    function applyLwpShift(d) {
-        if (!hasLwp) return d;
+    // Shifts a milestone date forward by every applicable spell (cumulative) and records which
+    // spells actually contributed to that specific milestone's deferral.
+    function applyLwpShiftToMilestone(d) {
         let shifted = new Date(d);
+        const applied = [];
         validSpells.forEach(s => {
-            if (shifted >= s.start) shifted.setDate(shifted.getDate() + s.days);
+            if (shifted >= s.start) {
+                shifted.setDate(shifted.getDate() + s.days);
+                applied.push(s);
+            }
         });
-        return shifted;
+        return { date: shifted, applied };
     }
 
-    // Builds a remarks suffix listing every discrete spell that has deferred the date reached so far.
-    function lwpRemarkFor(finalDate) {
-        if (!hasLwp) return '';
-        const applicable = validSpells.filter(s => finalDate >= s.start);
-        if (applicable.length === 0) return '';
-        const totalDays = applicable.reduce((sum, s) => sum + s.days, 0);
-        const parts = applicable.map(s => `${s.days} day(s) w.e.f. ${formatDate(s.start)}${s.remarks ? ' [' + s.remarks + ']' : ''}`);
-        return ` (Deferred by ${totalDays} day(s) total LWP: ${parts.join('; ')})`;
+    // Remarks format for a deferred CAS milestone: "LWP (affects CAS) DD-MM-YYYY to DD-MM-YYYY [Nd]"
+    function lwpRemarkForMilestone(appliedSpells) {
+        if (!appliedSpells || appliedSpells.length === 0) return '';
+        return ' &mdash; ' + appliedSpells.map(s => `LWP (affects CAS) ${formatDate(s.start)} to ${formatDate(s.end)} [${s.days}d]`).join('; ');
     }
 
     pushEvent(optionDate, { label: "DOA / PAY FIXATION", isInitial: true });
@@ -1205,32 +1282,30 @@ function computeRopa98Timeline(doj, optionDate, scaleKey, initialBasicPay, endDa
         { d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS - ADDL. INCREMENT", type: "20Y" }
     ];
     if (!isEligible18Y) milestoneDefs = milestoneDefs.filter(m => m.type !== "18Y");
-    milestoneDefs = milestoneDefs.map(m => ({ ...m, d: applyLwpShift(m.d) })).filter(m => m.d >= optionDate && m.d <= endDate);
-    milestoneDefs.forEach(m => pushEvent(m.d, { label: m.name, isMilestone: true, milestoneType: m.type }));
+    milestoneDefs = milestoneDefs
+        .map(m => {
+            const shift = applyLwpShiftToMilestone(m.d);
+            return { ...m, d: shift.date, appliedSpells: shift.applied };
+        })
+        .filter(m => m.d >= optionDate && m.d <= endDate);
+    milestoneDefs.forEach(m => pushEvent(m.d, { label: m.name, isMilestone: true, milestoneType: m.type, appliedSpells: m.appliedSpells }));
 
-    function vestingExtendedNextDate(milestoneDate) {
-        const y = milestoneDate.getFullYear() + 1, m = milestoneDate.getMonth(), d = milestoneDate.getDate();
-        if (d === 1) return new Date(y, m, 1);
-        const vestEnd = new Date(y, m + 1, 0);
-        const next = new Date(vestEnd);
-        next.setDate(next.getDate() + 1);
-        return next;
-    }
-
+    // RULE: an LWP-driven shift of a 10/18/20-Year CAS milestone date does NOT push out the next
+    // regular annual increment - it continues to fall on its originally scheduled (earlier) cycle
+    // date, regardless of where the milestone itself landed.
+    let prevIncrementDate = optionDate;
     let loopYear = optionDate.getFullYear() + 1;
     while (loopYear <= endDate.getFullYear() + 1) {
-        let normalCycleDate = new Date(loopYear, optionMonth, 1);
-        let priorCycleDate = new Date(loopYear - 1, optionMonth, 1);
-        let interveningMilestone = milestoneDefs.find(m => m.d >= priorCycleDate && m.d < normalCycleDate);
-        let incrementDate;
-        if (interveningMilestone) {
-            incrementDate = vestingExtendedNextDate(interveningMilestone.d);
-            if (incrementDate < normalCycleDate) incrementDate = applyLwpShift(normalCycleDate);
-        } else {
-            incrementDate = applyLwpShift(normalCycleDate);
-        }
+        let incrementDate = new Date(loopYear, optionMonth, 1);
         if (incrementDate >= optionDate && incrementDate <= endDate) {
-            pushEvent(incrementDate, { label: "INCREMENT", isAnnual: true });
+            // Informational only: note any LWP spell(s) falling in the period since the last
+            // increment. Per the ROPA-98 rule above, this does NOT change the increment date itself.
+            const periodSpells = validSpells.filter(s => s.start > prevIncrementDate && s.start <= incrementDate);
+            const periodNote = periodSpells.length
+                ? ' &mdash; ' + periodSpells.map(s => `LWP ${formatDate(s.start)} to ${formatDate(s.end)} [${s.days}d] (no effect on this increment date)`).join('; ')
+                : '';
+            pushEvent(incrementDate, { label: "INCREMENT", isAnnual: true, lwpPeriodNote: periodNote });
+            prevIncrementDate = incrementDate;
         }
         loopYear++;
     }
@@ -1251,7 +1326,9 @@ function computeRopa98Timeline(doj, optionDate, scaleKey, initialBasicPay, endDa
     }
 
     events.forEach(ev => {
-        let remarksText = ev.label + lwpRemarkFor(ev.date);
+        let remarksText = ev.label;
+        if (ev.isMilestone) remarksText += lwpRemarkForMilestone(ev.appliedSpells);
+        if (ev.isAnnual && ev.lwpPeriodNote) remarksText += ev.lwpPeriodNote;
 
         if (ev.isAnnual) {
             if (idx < ladder.length - 1) idx += 1;
@@ -1345,18 +1422,18 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
       {d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
       {d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
         if (milestone.name === "18 YEARS" && isExcludedFrom18Y) return;
-        if (milestone.d >= optionDate && milestone.d <= endDate) {
-            let win = checkWindow(milestone.d);
+        // RULE: 10/18/20-Year CAS milestone dates shift by the EXACT cumulative LWP days (no 30-day
+        // threshold), unlike the whole-month rule applied to the regular annual increment above.
+        const msShift = applyLwpDaysShiftToMilestone(milestone.d, lwpSpells);
+        const shiftedMilestoneDate = msShift.date;
+        if (shiftedMilestoneDate >= optionDate && shiftedMilestoneDate <= endDate) {
+            let win = checkWindow(shiftedMilestoneDate);
+            const msLabel = milestone.name + lwpDaysRemarkForMilestone(msShift.applied);
             if (win === 'A') {
-                let targetJul = new Date(milestone.d.getFullYear(), 6, 1);
-                const eff = effectForYear(targetJul.getFullYear());
-                if (eff && !eff.skip) {
-                    pushEvent(eff.financialDate, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A', isLwpDeferred: true, notionalDate: targetJul, lwpRemarks: eff.spell.remarks });
-                } else {
-                    pushEvent(targetJul, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A' });
-                }
+                let targetJul = new Date(shiftedMilestoneDate.getFullYear(), 6, 1);
+                pushEvent(targetJul, { label: msLabel, isMilestone: true, exactMilestoneDate: shiftedMilestoneDate, win: 'A', lwpDaysApplied: msShift.applied });
             } else {
-                pushEvent(milestone.d, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'B' });
+                pushEvent(shiftedMilestoneDate, { label: msLabel, isMilestone: true, exactMilestoneDate: shiftedMilestoneDate, win: 'B', lwpDaysApplied: msShift.applied });
             }
         }
     });
@@ -1367,6 +1444,7 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
         if (a.isMilestone && b.isAnnual) return 1;
         return 0;
     });
+    enforceSixMonthGap(events);
 
     let compiledRows = [];
     let runningBandPay = initialBandPay;
@@ -1383,7 +1461,12 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
         if (ev.isLwpDeferred) {
             remarksText += ` (Financial benefit deferred w.e.f. ${formatDate(ev.date)} due to LWP)`;
         }
+        if (ev.sixMonthGapApplied) {
+            remarksText += ` (Shifted to ${formatDate(ev.date)} to maintain 6-month gap from previous increment)`;
+        }
         let lwpNote = ev.isLwpDeferred ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (G.O. 181-SE(B) Dt. 8.10.2009)${ev.lwpRemarks ? ' &mdash; ' + ev.lwpRemarks : ''}</span><span>Notional date ${formatDate(ev.notionalDate)}; benefit deferred to ${formatDate(ev.date)}</span></div>` : '';
+        let msLwpDaysNote = (ev.lwpDaysApplied && ev.lwpDaysApplied.length) ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (affects CAS milestone date)</span><span>${ev.lwpDaysApplied.map(s => `${formatDate(s.start)} to ${formatDate(s.end)} [${s.days}d]`).join('; ')}</span></div>` : '';
+        let gapNote = ev.sixMonthGapApplied ? `<div class="slip-row" style="color:#d97706;"><span>6-Month Gap Rule</span><span>Shifted forward to ${formatDate(ev.date)}</span></div>` : '';
 
         if (ev.isInitial) {
             // seed row
@@ -1391,7 +1474,7 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
             incAmt = calculate09Increment(runningBandPay, runningGp);
             runningBandPay += incAmt;
             runningBasicPay = runningBandPay + runningGp;
-            if (ev.isLwpDeferred) slipBlockHTML = `<div class="slip-box">${lwpNote}</div>`;
+            if (ev.isLwpDeferred || ev.sixMonthGapApplied) slipBlockHTML = `<div class="slip-box">${lwpNote}${gapNote}</div>`;
         } else if (ev.isMilestone) {
             incAmt = calculate09Increment(runningBandPay, runningGp);
             runningBandPay += incAmt;
@@ -1406,7 +1489,7 @@ function computeRopa09Timeline(doj, optionDate, gpInput, initialBandPay, endDate
                     <div class="slip-row"><span>2.a) Allowed Normal Increment</span><span>${ev.win === 'A' ? 'Stacked July' : 'Nil'}</span></div>
                     <div class="slip-row"><span>&nbsp;&nbsp;&nbsp;b) Additional Increment for ${ev.label} Service</span><span>Rs. ${incAmt.toLocaleString('en-IN')}</span></div>
                     <div class="slip-row"><span class="slip-bold">&nbsp;&nbsp;&nbsp;c) Pay Fixed w.e.f ${formatDate(ev.date)}</span><span class="slip-bold">Rs. ${runningBasicPay.toLocaleString('en-IN')}</span></div>
-                    ${lwpNote}
+                    ${lwpNote}${msLwpDaysNote}${gapNote}
                 </div>`;
         }
 
@@ -1482,18 +1565,18 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
       {d: new Date(doj.getFullYear() + 18, doj.getMonth(), doj.getDate()), name: "18 YEARS"},
       {d: new Date(doj.getFullYear() + 20, doj.getMonth(), doj.getDate()), name: "20 YEARS"} ].forEach(milestone => {
         if (milestone.name === "18 YEARS" && isExcludedFrom18Y) return;
-        if (milestone.d >= startDate && milestone.d <= dor) {
-            let win = checkWindow(milestone.d);
+        // RULE: 10/18/20-Year CAS milestone dates shift by the EXACT cumulative LWP days (no 30-day
+        // threshold), unlike the whole-month rule applied to the regular annual increment above.
+        const msShift = applyLwpDaysShiftToMilestone(milestone.d, lwpSpells);
+        const shiftedMilestoneDate = msShift.date;
+        if (shiftedMilestoneDate >= startDate && shiftedMilestoneDate <= dor) {
+            let win = checkWindow(shiftedMilestoneDate);
+            const msLabel = milestone.name + lwpDaysRemarkForMilestone(msShift.applied);
             if (win === 'A') {
-                let targetJul = new Date(milestone.d.getFullYear(), 6, 1);
-                const eff = effectForYear(targetJul.getFullYear());
-                if (eff && !eff.skip) {
-                    pushEvent(eff.financialDate, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A', isLwpDeferred: true, notionalDate: targetJul, lwpRemarks: eff.spell.remarks });
-                } else {
-                    pushEvent(targetJul, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'A' });
-                }
+                let targetJul = new Date(shiftedMilestoneDate.getFullYear(), 6, 1);
+                pushEvent(targetJul, { label: msLabel, isMilestone: true, exactMilestoneDate: shiftedMilestoneDate, win: 'A', lwpDaysApplied: msShift.applied });
             } else {
-                pushEvent(milestone.d, { label: milestone.name, isMilestone: true, exactMilestoneDate: milestone.d, win: 'B' });
+                pushEvent(shiftedMilestoneDate, { label: msLabel, isMilestone: true, exactMilestoneDate: shiftedMilestoneDate, win: 'B', lwpDaysApplied: msShift.applied });
             }
         }
     });
@@ -1504,6 +1587,7 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
         if (a.isMilestone && b.isAnnual) return 1;
         return 0;
     });
+    enforceSixMonthGap(events);
 
     let compiledRows = [];
     let runningBasicPay = basicInput;
@@ -1521,14 +1605,19 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
         if (ev.isLwpDeferred) {
             remarksText += ` (Financial benefit deferred w.e.f. ${formatDate(ev.date)} due to LWP)`;
         }
+        if (ev.sixMonthGapApplied) {
+            remarksText += ` (Shifted to ${formatDate(ev.date)} to maintain 6-month gap from previous increment)`;
+        }
         let lwpNote = ev.isLwpDeferred ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (G.O. 181-SE(B) Dt. 8.10.2009)${ev.lwpRemarks ? ' &mdash; ' + ev.lwpRemarks : ''}</span><span>Notional date ${formatDate(ev.notionalDate)}; benefit deferred to ${formatDate(ev.date)}</span></div>` : '';
+        let msLwpDaysNote = (ev.lwpDaysApplied && ev.lwpDaysApplied.length) ? `<div class="slip-row" style="color:#c2410c;"><span>LWP (affects CAS milestone date)</span><span>${ev.lwpDaysApplied.map(s => `${formatDate(s.start)} to ${formatDate(s.end)} [${s.days}d]`).join('; ')}</span></div>` : '';
+        let gapNote = ev.sixMonthGapApplied ? `<div class="slip-row" style="color:#d97706;"><span>6-Month Gap Rule</span><span>Shifted forward to ${formatDate(ev.date)}</span></div>` : '';
 
         if (ev.isInitial) {
             colTrackingInfo = cellData.cell;
         } else if (ev.isAnnual) {
             runningBasicPay = matrixData19[runningLevel][cellData.index + 1] || runningBasicPay;
             colTrackingInfo = findCell19(runningLevel, runningBasicPay).cell;
-            if (ev.isLwpDeferred) slipBlockHTML = `<div class="slip-box">${lwpNote}</div>`;
+            if (ev.isLwpDeferred || ev.sixMonthGapApplied) slipBlockHTML = `<div class="slip-box">${lwpNote}${gapNote}</div>`;
         } else if (ev.isMilestone) {
             let postMilestone = matrixData19[runningLevel][cellData.index + 1] || runningBasicPay;
             if (ev.label === "18 YEARS" && eligibleFor18YScaleChange) {
@@ -1548,7 +1637,7 @@ function computeRopa19Timeline(doj, startDate, gpInput, levelInput, basicInput, 
                     <div class="slip-row"><span class="slip-bold">1. Existing Pay Matrix Cell Row on ${formatDate(ev.exactMilestoneDate)}</span><span>Rs. ${existingBasic.toLocaleString('en-IN')} (L-${existingLevel})</span></div>
                     <div class="slip-row"><span>2. Additional Step cell upgrade added for ${ev.label} Service</span><span>Rs. ${(postMilestone - existingBasic).toLocaleString('en-IN')}</span></div>
                     <div class="slip-row"><span class="slip-bold">3. Final Matrix Fitment Entry w.e.f ${formatDate(ev.date)}</span><span class="slip-bold">Rs. ${runningBasicPay.toLocaleString('en-IN')} (${finalCellInfo.cell})</span></div>
-                    ${lwpNote}
+                    ${lwpNote}${msLwpDaysNote}${gapNote}
                 </div>`;
         }
 
@@ -2409,39 +2498,53 @@ function printChallan() {
     const sums = window._odSums || { overDrawn: 0 };
     const amount = sums.overDrawn || 0;
     const particulars = `Over drawn amount Refund by ${val('odEmpName')} ; ${val('odEmpDesig')} ${val('odSchoolName')} ; due to ${val('reasonText')}`;
+    const treasuryCodeParts = (val('chlTreasuryCode') || '').replace(/[^A-Za-z0-9]/g, '').split('');
+
+    function boxRow(count, chars) {
+        let boxes = '';
+        for (let i = 0; i < count; i++) boxes += `<div class="chl-box">${(chars && chars[i]) ? chars[i] : ''}</div>`;
+        return `<div class="chl-box-grid">${boxes}</div>`;
+    }
 
     const content = `
-    <div class="chl-wrap">
-        <div class="chl-copy-label">ORIGINAL &nbsp;&nbsp;/&nbsp;&nbsp; DUPLICATE &nbsp;&nbsp;/&nbsp;&nbsp; TRIPLICATE &nbsp;&nbsp;/&nbsp;&nbsp; QUADRUPLICATE</div>
-        <div class="chl-form-no">T. R. FORM NO. 7</div>
-        <div class="chl-see">[See S.R. 46]</div>
-        <div class="chl-heading">CHALLAN FOR DEPOSIT OF MONEY IN THE ACCOUNT OF GOVERNMENT OF WEST BENGAL</div>
+    <div class="chl-wrap-plain">
+        <div class="chl-title-main">T.R.FORM NO.-7</div>
+        <div class="chl-title-sub">[See sub-rule (2)(b) of T.R.3.06]</div>
+        <div class="chl-title-heading">Challan for Deposit of money in the account of GOVERNMENT OF WEST BENGAL</div>
 
-        <div class="chl-row"><div class="chl-num">FOR</div><div class="chl-label">${val('odSubDivision')} TREASURY</div></div>
+        <div class="chl-item"><b>1.</b>&nbsp; Name of the Bank &amp; Branch: <span class="chl-fill">${val('chlBank')}</span></div>
+        <div class="chl-item"><b>2.</b>&nbsp; (a). Name of the Treasury: <span class="chl-fill">${val('chlTreasury')}</span></div>
+        <div class="chl-item chl-indent">(b). &nbsp;Treasury Code:&nbsp; ${boxRow(3, treasuryCodeParts)}</div>
+        <div class="chl-item chl-indent">(c). &nbsp;A/C No.: <span class="chl-fill">${val('chlAccNo')}</span></div>
 
-        <div class="chl-row"><div class="chl-num">1.</div><div class="chl-label">Name of Bank &amp; Branch</div><div class="chl-val">${val('chlBank')}</div></div>
-        <div class="chl-row"><div class="chl-num">2a.</div><div class="chl-label">Name of Treasury</div><div class="chl-val">${val('chlTreasury')}</div></div>
-        <div class="chl-row"><div class="chl-num">2b.</div><div class="chl-label">Treasury Code</div><div class="chl-val">${val('chlTreasuryCode')}</div></div>
-        <div class="chl-row"><div class="chl-num">3.</div><div class="chl-label">Account Code (14 digits)</div><div class="chl-val">&nbsp;</div></div>
-        <div class="chl-row"><div class="chl-num">4.</div><div class="chl-label">Detail Head of Account</div><div class="chl-val">${val('chlHead')}</div></div>
-        <div class="chl-row"><div class="chl-num">5a.</div><div class="chl-label">Amount</div><div class="chl-val">Rs. ${amount.toLocaleString('en-IN')}</div></div>
-        <div class="chl-row"><div class="chl-num">5b.</div><div class="chl-label">In Words</div><div class="chl-val">Rupees ${numberToWords(amount)} Only</div></div>
-        <div class="chl-row"><div class="chl-num">6.</div><div class="chl-label">By whom tendered; Name and Address</div><div class="chl-val">${val('chlTenderedBy')}</div></div>
-        <div class="chl-row"><div class="chl-num">7.</div><div class="chl-label">Departmental Officer on whose behalf money is paid</div><div class="chl-val">${val('chlDeptOfficer')}</div></div>
-        <div class="chl-row"><div class="chl-num">8a.</div><div class="chl-label">Particulars and Authority of deposit</div><div class="chl-val">${particulars}</div></div>
-        <div class="chl-row"><div class="chl-num">8b.</div><div class="chl-label">T.V. No. and date of A.C. Bill</div><div class="chl-val">${val('chlTvNo')}</div></div>
+        <div class="chl-item"><b>3.</b>&nbsp; Account Code: ${boxRow(14)}</div>
+        <div class="chl-item-note">(14- Digits must be filled up properly)</div>
+        <div class="chl-item"><b>4.</b>&nbsp; Detail Head of Account: <span class="chl-fill">${val('chlHead')}</span></div>
 
-        <div class="chl-sig-grid">
+        <div class="chl-item"><b>5.</b>&nbsp; (a) &nbsp;Amount :&nbsp; Rs. <span class="chl-amt-box">${amount ? amount.toLocaleString('en-IN') : ''}</span></div>
+        <div class="chl-item chl-indent">(b) &nbsp;In Words: Rupees <span class="chl-fill">${amount ? numberToWords(amount) + ' Only' : ''}</span></div>
+
+        <div class="chl-item"><b>6.</b> By whom tendered &ndash; Name &amp; Address: <span class="chl-fill">${val('chlTenderedBy')}</span></div>
+        <div class="chl-item"><b>7.</b> Name / Designation &amp; Address of the Departmental Officer on whose behalf / favour money is paid: <span class="chl-fill">${val('chlDeptOfficer')}</span></div>
+
+        <div class="chl-item"><b>8.</b>&nbsp; (a) Particulars &amp; Authority of Deposit: <span class="chl-fill">${particulars}</span></div>
+        <div class="chl-item"><sup>1</sup>* (b) T.V. No. &amp; Date of A.C. Bill: <span class="chl-fill">${val('chlTvNo')}</span></div>
+        <div class="chl-item"><b>9.</b>&nbsp; Accounts Officer by whom adjustable:&nbsp;&nbsp; Accountant General (A&amp;E), West Bengal</div>
+
+        <div class="chl-item" style="margin-top:16px;">Verified</div>
+
+        <div class="chl-footer-grid">
             <div>Signature of Departmental / Treasury Officer</div>
-            <div>Depositor's Signature</div>
-            <div>Date</div>
-            <div>Treasury Receipt Challan No.</div>
-            <div>Received Payment</div>
+            <div style="text-align:right;">Depositor&rsquo;s Signature</div>
+            <div>Date: ${val('chlDate') ? fmtDMY(val('chlDate')) : ''}</div>
+            <div>Treasury Receipted Challan No.</div>
+            <div>Received payment.</div>
             <div>Bank Scroll Serial No.</div>
-            <div>Received by Bank / Treasury</div>
-            <div>Signature with seal of Bank</div>
+            <div>Receipt by Bank / Treasury<div class="chl-date-line">Date:</div></div>
+            <div>Signature with seal of the Bank.</div>
         </div>
-        <div class="chl-note">* In respect of Challan relating to refund of over-drawn salary. Date: ${val('chlDate') ? val('chlDate').split('-').reverse().join('-') : '-'}</div>
+
+        <div class="chl-note">* In respect of Challan relating to refund of over-drawn salary.</div>
     </div>`;
 
     document.getElementById('printArea').innerHTML = content;
@@ -2817,6 +2920,7 @@ async function exportOverdrawnExcel() {
 
     const ws2 = workbook.addWorksheet('CHALLAN');
     ws2.addRow(['T. R. FORM NO. 7']);
+    ws2.addRow(['A/C No.', val('chlAccNo')]);
     ws2.addRow(['Detail Head of Account', val('chlHead')]);
     ws2.addRow(['Amount', sums.overDrawn || 0]);
     ws2.addRow(['In Words', `Rupees ${numberToWords(sums.overDrawn||0)} Only`]);
