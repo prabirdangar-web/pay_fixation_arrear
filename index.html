@@ -1095,6 +1095,35 @@ function findCell19(level, basic) {
 }
 
 // ===== MULTI-ROW LWP ENTRIES (several discrete spells / single dates) =====
+// Re-rendering a table wipes and recreates its <input> elements via innerHTML.
+// Native date inputs can fire 'change' as soon as a complete valid date is typed
+// (before the field is blurred), so a naive re-render steals focus mid-entry and
+// makes typing feel like it "stops working". This helper remembers which field
+// (by data-rowid/data-field) was focused, runs the render, then restores focus
+// (and cursor/segment position where possible) on the recreated element.
+function withFocusPreserved(renderFn) {
+    const active = document.activeElement;
+    let info = null;
+    if (active && active.dataset && active.dataset.field) {
+        info = {
+            rowid: active.dataset.rowid,
+            field: active.dataset.field,
+            selStart: (typeof active.selectionStart === 'number') ? active.selectionStart : null,
+            selEnd: (typeof active.selectionEnd === 'number') ? active.selectionEnd : null
+        };
+    }
+    renderFn();
+    if (info) {
+        const el = document.querySelector(`[data-rowid="${info.rowid}"][data-field="${info.field}"]`);
+        if (el) {
+            el.focus();
+            if (info.selStart !== null && typeof el.setSelectionRange === 'function') {
+                try { el.setSelectionRange(info.selStart, info.selEnd); } catch (e) { /* not applicable to this input type */ }
+            }
+        }
+    }
+}
+
 let lwpRows = [];
 let lwpRowSeq = 1;
 
@@ -1134,7 +1163,7 @@ function updateLwpField(id, field, v) {
         const auto = daysBetweenInclusive(row.start, row.end);
         if (auto > 0) row.days = auto;
     }
-    renderLwpTable();
+    withFocusPreserved(renderLwpTable);
     updateAll();
 }
 
@@ -1147,14 +1176,14 @@ function renderLwpTable() {
         let rowsHtml = lwpRows.map(r => `
             <tr>
                 <td style="padding:4px;">
-                    <select onchange="updateLwpField(${r.id},'type',this.value)">
+                    <select data-rowid="${r.id}" data-field="type" onchange="updateLwpField(${r.id},'type',this.value)">
                         <option value="other" ${r.type === 'other' ? 'selected' : ''}>Other / Personal (Defers CAS)</option>
                         <option value="medical" ${r.type === 'medical' ? 'selected' : ''}>Medical (E.O.L.) &mdash; No Effect</option>
                     </select>
                 </td>
-                <td style="padding:4px;"><input type="date" class="tbl-input" style="width:130px;" value="${r.start}" onchange="updateLwpField(${r.id},'start',this.value)"></td>
-                <td style="padding:4px;"><input type="date" class="tbl-input" style="width:130px;" value="${r.end}" onchange="updateLwpField(${r.id},'end',this.value)"></td>
-                <td style="padding:4px;"><input type="number" min="0" class="tbl-input" style="width:70px;" value="${r.days}" onchange="updateLwpField(${r.id},'days',this.value)"></td>
+                <td style="padding:4px;"><input type="date" class="tbl-input" style="width:130px;" data-rowid="${r.id}" data-field="start" value="${r.start}" onchange="updateLwpField(${r.id},'start',this.value)"></td>
+                <td style="padding:4px;"><input type="date" class="tbl-input" style="width:130px;" data-rowid="${r.id}" data-field="end" value="${r.end}" onchange="updateLwpField(${r.id},'end',this.value)"></td>
+                <td style="padding:4px;"><input type="number" min="0" class="tbl-input" style="width:70px;" data-rowid="${r.id}" data-field="days" value="${r.days}" onchange="updateLwpField(${r.id},'days',this.value)"></td>
                 <td style="padding:4px; text-align:center;"><button type="button" class="btn-del" onclick="removeLwpRow(${r.id})">Del</button></td>
             </tr>`).join('');
         wrap.innerHTML = `
@@ -2000,7 +2029,8 @@ function generateArrearTable() {
             y, m,
             admBasic, drBasic,
             admGPF: defGpf, drGPF: defGpf,
-            admIT: defIt, drIT: defIt
+            admIT: defIt, drIT: defIt,
+            admMA: 0, drMA: 0
         });
         curr.setMonth(curr.getMonth() + 1);
     }
@@ -2011,21 +2041,25 @@ function computeRow(row) {
     const da = num('daRate') / 100;
     const hraR = num('hraRate') / 100;
 
+    const admMA = row.admMA || 0;
+    const drMA = row.drMA || 0;
+
     const admDA = Math.round(row.admBasic * da);
     const admHRA = Math.round(row.admBasic * hraR);
-    const admGross = row.admBasic + admDA + admHRA;
+    const admGross = row.admBasic + admDA + admHRA + admMA;
     const admPT = ptSlab(admGross);
     const admNet = admGross - row.admGPF - row.admIT - admPT;
 
     const drDA = Math.round(row.drBasic * da);
     const drHRA = Math.round(row.drBasic * hraR);
-    const drGross = row.drBasic + drDA + drHRA;
+    const drGross = row.drBasic + drDA + drHRA + drMA;
     const drPT = ptSlab(drGross);
     const drNet = drGross - row.drGPF - row.drIT - drPT;
 
     const dueBasic = row.admBasic - row.drBasic;
     const dueDA = admDA - drDA;
     const dueHRA = admHRA - drHRA;
+    const dueMA = admMA - drMA;
     const dueGross = admGross - drGross;
     const dueGPF = row.admGPF - row.drGPF;
     const dueIT = row.admIT - row.drIT;
@@ -2033,15 +2067,15 @@ function computeRow(row) {
     const dueNet = admNet - drNet;
 
     return {
-        admBasic: row.admBasic, admDA, admHRA, ma: 0, admGross, admGPF: row.admGPF, admIT: row.admIT, admPT, admNet,
-        drBasic: row.drBasic, drDA, drHRA, drGross, drGPF: row.drGPF, drIT: row.drIT, drPT, drNet,
-        dueBasic, dueDA, dueHRA, dueGross, dueGPF, dueIT, duePT, dueNet
+        admBasic: row.admBasic, admDA, admHRA, admMA, admGross, admGPF: row.admGPF, admIT: row.admIT, admPT, admNet,
+        drBasic: row.drBasic, drDA, drHRA, drMA, drGross, drGPF: row.drGPF, drIT: row.drIT, drPT, drNet,
+        dueBasic, dueDA, dueHRA, dueMA, dueGross, dueGPF, dueIT, duePT, dueNet
     };
 }
 
 function updateRowField(idx, field, val) {
     arrearRows[idx][field] = parseFloat(val) || 0;
-    renderDashboardTable();
+    withFocusPreserved(renderDashboardTable);
 }
 
 function renderDashboardTable() {
@@ -2062,25 +2096,29 @@ function renderDashboardTable() {
         trAdm.innerHTML = `
             <td rowspan="3"><strong>${mName}</strong></td>
             <td><strong>Admissible</strong></td>
-            <td><input class="tbl-input" value="${row.admBasic}" onchange="updateRowField(${idx},'admBasic',this.value)"></td>
-            <td>${c.admDA}</td><td>${c.admHRA}</td><td>0</td><td><strong>${c.admGross}</strong></td>
-            <td><input class="tbl-input" value="${row.admGPF}" onchange="updateRowField(${idx},'admGPF',this.value)"></td>
-            <td><input class="tbl-input" value="${row.admIT}" onchange="updateRowField(${idx},'admIT',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="admBasic" value="${row.admBasic}" onchange="updateRowField(${idx},'admBasic',this.value)"></td>
+            <td>${c.admDA}</td><td>${c.admHRA}</td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="admMA" value="${row.admMA||0}" onchange="updateRowField(${idx},'admMA',this.value)"></td>
+            <td><strong>${c.admGross}</strong></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="admGPF" value="${row.admGPF}" onchange="updateRowField(${idx},'admGPF',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="admIT" value="${row.admIT}" onchange="updateRowField(${idx},'admIT',this.value)"></td>
             <td>${c.admPT}</td><td><strong>${c.admNet}</strong></td>`;
 
         const trDr = document.createElement('tr'); trDr.className = 'drawn-row';
         trDr.innerHTML = `
             <td><strong>Drawn</strong></td>
-            <td><input class="tbl-input" value="${row.drBasic}" onchange="updateRowField(${idx},'drBasic',this.value)"></td>
-            <td>${c.drDA}</td><td>${c.drHRA}</td><td>0</td><td><strong>${c.drGross}</strong></td>
-            <td><input class="tbl-input" value="${row.drGPF}" onchange="updateRowField(${idx},'drGPF',this.value)"></td>
-            <td><input class="tbl-input" value="${row.drIT}" onchange="updateRowField(${idx},'drIT',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="drBasic" value="${row.drBasic}" onchange="updateRowField(${idx},'drBasic',this.value)"></td>
+            <td>${c.drDA}</td><td>${c.drHRA}</td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="drMA" value="${row.drMA||0}" onchange="updateRowField(${idx},'drMA',this.value)"></td>
+            <td><strong>${c.drGross}</strong></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="drGPF" value="${row.drGPF}" onchange="updateRowField(${idx},'drGPF',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="drIT" value="${row.drIT}" onchange="updateRowField(${idx},'drIT',this.value)"></td>
             <td>${c.drPT}</td><td><strong>${c.drNet}</strong></td>`;
 
         const trDue = document.createElement('tr'); trDue.className = 'due-row';
         trDue.innerHTML = `
             <td><strong>Due (Arrear)</strong></td>
-            <td>${c.dueBasic}</td><td>${c.dueDA}</td><td>${c.dueHRA}</td><td>0</td><td><strong>${c.dueGross}</strong></td>
+            <td>${c.dueBasic}</td><td>${c.dueDA}</td><td>${c.dueHRA}</td><td>${c.dueMA}</td><td><strong>${c.dueGross}</strong></td>
             <td>${c.dueGPF}</td><td>${c.dueIT}</td><td>${c.duePT}</td>
             <td style="font-weight:800; color:#9a3412;">${c.dueNet}</td>`;
 
@@ -2302,25 +2340,48 @@ function addOverdrawnRow() {
     const monthDate = new Date(y, mm - 1, 1);
     const snap = getAdmissibleSnapshotForDate(monthDate);
 
-    let admPB = snap ? snap.payBand : 11252;
-    let admGP = snap ? snap.gradePay : 4640;
+    // FIRST: check if the Arrear table (Tab 1) already has a computed row for this
+    // exact month -- that row correctly reflects fraction-of-month / mixed basic pay
+    // (e.g. part-month LWP or a mid-month pay revision), so prefer it over generic defaults.
+    const arrMatch = arrearRows.find(r => r.y === y && r.m === mm);
+
     let bandStr = snap ? snap.band : 'PB-4';
     let scaleStr = snap ? snap.scale : '9000-40500';
+    let drPayBand, drGradePay, drDA, drHRA, drMA;
+    let admPayBand, admGradePay, admDA, admHRA, admMA;
+    let remarksText;
 
-    let defaultDrGP = 4100; // DEFAULT DRAWN GRADE PAY = 4100
-    let defaultDrPB = 11640;
+    if (arrMatch) {
+        const c = computeRow(arrMatch);
+        // Split basic into Pay Band + Grade Pay isn't tracked in the arrear table,
+        // so carry the full admissible/drawn basic in the Pay Band column and
+        // leave Grade Pay at 0 -- the Rev. Basic total (PayBand + GradePay) stays correct.
+        drPayBand = c.drBasic; drGradePay = 0; drDA = c.drDA; drHRA = c.drHRA; drMA = c.drMA;
+        admPayBand = c.admBasic; admGradePay = 0; admDA = c.admDA; admHRA = c.admHRA; admMA = c.admMA;
+        remarksText = 'Auto-fetched from Arrear Table (Tab 1) -- fraction-day / mixed basic pay for this month applied';
+    } else {
+        let admPB = snap ? snap.payBand : 11252;
+        let admGP = snap ? snap.gradePay : 4640;
+        let defaultDrGP = 4100; // DEFAULT DRAWN GRADE PAY = 4100
+        let defaultDrPB = 11640;
+        let daPct = (m >= "2011-01") ? 0.35 : 0.27;
 
-    let daPct = (m >= "2011-01") ? 0.35 : 0.27;
-    let drDA = Math.round((defaultDrPB + defaultDrGP) * daPct);
-    let drHRA = Math.round((defaultDrPB + defaultDrGP) * 0.12);
-    let admDA = Math.round((admPB + admGP) * daPct);
-    let admHRA = Math.round((admPB + admGP) * 0.12);
+        drPayBand = defaultDrPB; drGradePay = defaultDrGP;
+        drDA = Math.round((defaultDrPB + defaultDrGP) * daPct);
+        drHRA = Math.round((defaultDrPB + defaultDrGP) * 0.12);
+        drMA = 300;
+        admPayBand = admPB; admGradePay = admGP;
+        admDA = Math.round((admPB + admGP) * daPct);
+        admHRA = Math.round((admPB + admGP) * 0.12);
+        admMA = 290;
+        remarksText = snap ? `Auto-fetched Admissible Pay from generated ${snap.era} Table` : '';
+    }
 
     odRows.push({
         id: ++odSeq, month: m, band: bandStr, scale: scaleStr,
-        drPayBand: defaultDrPB, drGradePay: defaultDrGP, drDP: 0, drDA: drDA, drHRA: drHRA, drMA: 300, drIR: 0,
-        admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: 290, admIR: 0,
-        remarks: snap ? `Auto-fetched Admissible Pay from generated ${snap.era} Table` : ''
+        drPayBand: drPayBand, drGradePay: drGradePay, drDP: 0, drDA: drDA, drHRA: drHRA, drMA: drMA, drIR: 0,
+        admPayBand: admPayBand, admGradePay: admGradePay, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: admMA, admIR: 0,
+        remarks: remarksText
     });
     renderOdTable();
 }
@@ -2335,7 +2396,7 @@ function updateOdField(id, field, v) {
     if (!row) return;
     if (field === 'band' || field === 'scale' || field === 'remarks' || field === 'month') row[field] = v;
     else row[field] = parseFloat(v) || 0;
-    renderOdTable();
+    withFocusPreserved(renderOdTable);
 }
 
 function computeOdRow(row) {
@@ -2349,7 +2410,7 @@ function computeOdRow(row) {
 }
 
 function inp(id, field, value, cls) {
-    return `<input class="tbl-input ${cls||''}" value="${value}" onchange="updateOdField(${id},'${field}',this.value)">`;
+    return `<input class="tbl-input ${cls||''}" data-rowid="${id}" data-field="${field}" value="${value}" onchange="updateOdField(${id},'${field}',this.value)">`;
 }
 
 function renderOdTable() {
@@ -2394,7 +2455,7 @@ function renderOdTable() {
             <td><strong>${c.admTotal}</strong></td>
             <td class="over-cell">${c.overDrawn}</td>
             <td>${c.daPercent}</td>
-            <td><input class="tbl-input remark" value="${row.remarks.replace(/"/g,'&quot;')}" onchange="updateOdField(${row.id},'remarks',this.value)"></td>
+            <td><input class="tbl-input remark" data-rowid="${row.id}" data-field="remarks" value="${row.remarks.replace(/"/g,'&quot;')}" onchange="updateOdField(${row.id},'remarks',this.value)"></td>
             <td><button type="button" class="btn-del" onclick="removeOdRow(${row.id})">Del</button></td>
         `;
         tbody.appendChild(tr);
