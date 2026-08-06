@@ -333,8 +333,9 @@
 
 <!-- TAB NAVIGATION -->
 <div class="tab-nav">
-    <button class="tab-btn active" onclick="switchTab('tabPayable')">1. Payable Pay &amp; Fixation Arrear System</button>
-    <button class="tab-btn ref-tab" onclick="switchTab('tabOverdrawn')">2. Over Drawn Salary &amp; T.R. Form No.7 Refund (REF ADDED)</button>
+    <button class="tab-btn active" onclick="switchTab('tabPayable')" data-tab="tabPayable">1. Payable Pay &amp; Fixation Arrear System</button>
+    <button class="tab-btn ref-tab" onclick="switchTab('tabOverdrawn')" data-tab="tabOverdrawn">2. Over Drawn Salary &amp; T.R. Form No.7 Refund (REF ADDED)</button>
+    <button class="tab-btn ref-tab" onclick="switchTab('tabDaCase')" data-tab="tabDaCase" style="background:#7c3aed; color:#fff;">3. DA Case (Auto Arrear Calculation)</button>
 </div>
 
 <!-- ==================== TAB 1: PAYABLE PAY & FIXATION ARREAR SYSTEM ==================== -->
@@ -563,7 +564,12 @@
             <div class="fg"><label>DA Rate (%)</label><input type="number" id="daRate" value="18" step="0.5" onchange="generateArrearTable()"></div>
             <div class="fg"><label>HRA Rate (%)</label><input type="number" id="hraRate" value="12" step="0.5" onchange="generateArrearTable()"></div>
             <div class="fg"><label>Default GPF / PF (₹/month)</label><input type="number" id="defaultGpf" value="0" onchange="generateArrearTable()"></div>
-            <div class="fg"><label>Default I.T. / Other (₹/month)</label><input type="number" id="defaultIt" value="0" onchange="generateArrearTable()"></div>
+            <div class="fg"><label>Default I.T. (₹/month)</label><input type="number" id="defaultIt" value="0" onchange="generateArrearTable()"></div>
+            <div class="fg"><label>Default OTH (₹/month)</label><input type="number" id="defaultOth" value="0" onchange="generateArrearTable()"></div>
+        </div>
+        <div style="font-size:0.75rem; color:#475569; margin-top:4px;">
+            M.A. auto-defaults to ₹300 (ROPA-2009 era, before 01-01-2020) or ₹500 (ROPA-2019 era, from 01-01-2020) per month &mdash; editable per row in the table below.<br>
+            I.R. (Interim Relief) auto-defaults to 10% of Basic Pay as on 01-01-2016 for months Jan-2016 to Dec-2019 (Grade Pay counted in full), 0 otherwise &mdash; editable per row.
         </div>
 
         <div style="background:#e2e8f0; padding:12px; border-radius:6px; margin-top:10px;">
@@ -597,7 +603,7 @@
         <table id="dashboardArrearTable">
             <thead>
                 <tr>
-                    <th>Status</th><th>Month</th><th>Basic Pay (₹)</th><th>DA (₹)</th><th>HRA (₹)</th><th>MA (₹)</th><th>Gross Pay (₹)</th><th>PF / GPF (₹)</th><th>I.T. / OTH (₹)</th><th>P-Tax (₹)</th><th>Net Pay (₹)</th>
+                    <th>Status</th><th>Month</th><th>Basic Pay (₹)</th><th>DA (₹)</th><th>HRA (₹)</th><th>MA (₹)</th><th>IR (₹)</th><th>Gross Pay (₹)</th><th>PF / GPF (₹)</th><th>I.T. (₹)</th><th>OTH (₹)</th><th>P-Tax (₹)</th><th>Net Pay (₹)</th>
                 </tr>
             </thead>
             <tbody id="dashboardArrearBody"></tbody>
@@ -665,7 +671,7 @@
                         <tr><th>Pay in Band</th><th>Grade Pay</th><th>AGP</th><th>Basic Pay</th><th>D.A</th><th>H.R.A</th><th>M.A</th><th>IR</th><th>Gross</th><th>C.P.F/G.P.F</th></tr>
                     </thead>
                     <tbody>
-                        <tr><td>-</td><td>-</td><td>-</td><td id="cell_basic">8,977</td><td id="cell_da">1,616</td><td id="cell_hra">1,077</td><td>-</td><td>-</td><td id="cell_gross" style="font-weight:bold;">11,670</td><td id="cell_gpf">-</td></tr>
+                        <tr><td>-</td><td>-</td><td>-</td><td id="cell_basic">8,977</td><td id="cell_da">1,616</td><td id="cell_hra">1,077</td><td id="cell_ma">-</td><td id="cell_ir">-</td><td id="cell_gross" style="font-weight:bold;">11,670</td><td id="cell_gpf">-</td></tr>
                     </tbody>
                 </table>
 
@@ -680,9 +686,9 @@
             <div>
                 <div style="font-size:0.75rem; font-weight:bold; text-align:center; margin-bottom:2px;">To be credited to:</div>
                 <table class="annex1-subtable">
-                    <thead><tr><th>P.T</th><th>C.P.F/G.P.F</th><th>Other</th><th>Net Claim</th></tr></thead>
+                    <thead><tr><th>P.T</th><th>C.P.F/G.P.F</th><th>I.Tax</th><th>Other</th><th>Net Claim</th></tr></thead>
                     <tbody>
-                        <tr><td id="cell_pt_credited">-</td><td id="cell_gpf_credited">-</td><td id="cell_oth_credited">-</td><td id="cell_net_claim" style="font-weight:bold;">11670</td></tr>
+                        <tr><td id="cell_pt_credited">-</td><td id="cell_gpf_credited">-</td><td id="cell_itax_credited">-</td><td id="cell_oth_credited">-</td><td id="cell_net_claim" style="font-weight:bold;">11670</td></tr>
                     </tbody>
                 </table>
                 <div style="font-size:0.72rem; font-weight:bold; margin-top:4px;">Less: any ad-hoc payment mode.</div>
@@ -836,6 +842,182 @@
 
 </div>
 
+<!-- ==================== TAB 3: DA CASE (AUTO ARREAR CALCULATION) ==================== -->
+<div id="tabDaCase" class="tab-content">
+
+    <div class="output-box" style="background:#ede9fe; border-left-color:#7c3aed; color:#4c1d95;">
+        <strong>DA CASE &mdash; AUTO ARREAR CALCULATION:</strong> Computes month-wise Dearness Allowance (D.A.) arrear
+        arising from the difference between D.A. actually <em>Drawn</em> (State/ROPA rate) and D.A. <em>Payable / Admissible</em>
+        (revised / due rate) on the same Basic Pay, for the selected period &mdash; using the same D.A. rate history as
+        ROPA-2009 (Apr-2008 to Dec-2019) and ROPA-2019 (Jan-2020 onward). Generates a separate Annexure and a separate
+        Month-wise Calculation Sheet, printable and exportable exactly like Tabs 1 &amp; 2.
+    </div>
+
+    <!-- 1. SCHOOL & EMPLOYEE DETAILS -->
+    <h3>1. School &amp; Employee Details (Ref Synced)</h3>
+    <div class="panel">
+        <div class="grid">
+            <div class="fg wide"><label>Name of School</label><input id="daSchoolName" value="" onchange="syncSharedFields()"></div>
+            <div class="fg"><label>Name of Employee</label><input id="daEmpName" value="" onchange="syncSharedFields()"></div>
+            <div class="fg"><label>Designation</label><input id="daEmpDesig" value="" onchange="syncSharedFields()"></div>
+        </div>
+    </div>
+
+    <!-- 2. BASIC PAY SEGMENTS -->
+    <h3>2. Basic Pay Segments (Effective From &mdash; Basic Pay in ₹)</h3>
+    <div class="panel">
+        <div class="output-box" style="margin-bottom:10px;">
+            Auto-fetched from Tab 1's generated Admissible Pay Table (every month the admissible Basic Pay changes
+            becomes a new segment here). Click <strong>"Generate Pay Tables"</strong> and
+            <strong>"1. Calculate Arrear &amp; Refresh"</strong> on Tab 1 first, then use the button below to (re-)sync.
+            You can still add / edit / delete rows manually below if needed.
+        </div>
+        <div id="daBasicTableWrap" class="table-wrap"></div>
+        <div class="btn-row">
+            <button type="button" class="btn-sync" onclick="autoDeriveDaBasicSegments()">⚡ Re-fetch from Pay Table (Tab 1)</button>
+            <button type="button" class="btn-add" onclick="addDaBasicRow()">+ Add Basic Pay Segment Manually</button>
+        </div>
+    </div>
+
+    <!-- 3. PERIOD, REASON & INSTALLMENTS -->
+    <h3>3. Calculation Period, Reason &amp; Installments</h3>
+    <div class="panel">
+        <div class="grid">
+            <div class="fg"><label>Period From</label><input type="month" id="daFrom" value="2008-04" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Period To</label><input type="month" id="daTo" value="2019-12" onchange="generateDaCaseTable()"></div>
+            <div class="fg wide"><label>Reason for DA Case (Sub:- Arrear due to)</label><input id="daReasonText" value="difference between D.A. actually drawn and D.A. admissible/payable as per the Government rate applicable for the corresponding period" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Period-1 End Date (for installment split)</label><input type="date" id="daPeriod1End" value="2015-12-31" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Installment-1 %</label><input type="number" id="daInst1Pct" value="50" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Installment-1 Payable In</label><input id="daInst1Label" value="March, 2026" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Installment-2 %</label><input type="number" id="daInst2Pct" value="50" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Installment-2 Payable In</label><input id="daInst2Label" value="September, 2026" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>H.R.A. Rate (%) &mdash; on Basic Pay</label><input type="number" id="daHraRate" value="12" step="0.5" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>M.A. (₹ / month) &mdash; Manual (default: 300 ROPA-09 / 500 ROPA-19)</label><input type="number" id="daMa" value="" placeholder="auto" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>I.R. (₹ / month) &mdash; Manual (default: 10% of Basic as on 1.1.2016, Jan16-Dec19)</label><input type="number" id="daIr" value="" placeholder="auto" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>G.P.F. / C.P.F. (₹) &mdash; Manual</label><input type="number" id="daGpf" value="0" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Income Tax (₹) &mdash; Manual</label><input type="number" id="daItax" value="0" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Other Deduction (₹) &mdash; Manual</label><input type="number" id="daOth" value="0" onchange="generateDaCaseTable()"></div>
+            <div class="fg"><label>Profession Tax (₹) &mdash; Auto</label><input type="text" id="daPtDisplay" value="0" disabled style="background:#f1f5f9;"></div>
+        </div>
+        <div class="btn-row">
+            <button type="button" class="btn-main" onclick="generateDaCaseTable()">Generate / Refresh DA Case Table</button>
+        </div>
+    </div>
+
+    <div class="output-box" id="daSummaryBox">Generate the table to see totals.</div>
+
+    <!-- 4. MONTH-WISE DA CASE TABLE -->
+    <h3>4. Month-Wise D.A. Drawn vs Payable Statement</h3>
+    <div class="table-wrap">
+        <table id="daCaseTable">
+            <thead>
+                <tr>
+                    <th>Sl</th><th>Month</th><th>Basic Pay (₹)</th>
+                    <th>D.A.% Drawn</th><th>D.A. Drawn (₹)</th>
+                    <th>D.A.% Payable</th><th>D.A. Payable (₹)</th>
+                    <th>Arrear D.A. (₹)</th>
+                </tr>
+            </thead>
+            <tbody id="daCaseBody"></tbody>
+            <tfoot><tr class="total-row" id="daCaseTotalRow"></tr></tfoot>
+        </table>
+    </div>
+
+    <!-- 4b. DRAWN / DUE CALCULATION SHEET (ANNEX STYLE, LIVE) -->
+    <h3>4b. D.A. Calculation Sheet &mdash; Admissible / Drawn / Due (Annex Style)</h3>
+    <div class="table-wrap">
+        <table id="daCalcSheetTable">
+            <thead>
+                <tr>
+                    <th>Status</th><th>Month</th><th>Basic Pay (₹)</th>
+                    <th>D.A (₹)</th><th>H.R.A (₹)</th><th>M.A (₹)</th><th>IR (₹)</th>
+                    <th>GPF (₹)</th><th>I.T (₹)</th><th>OTH (₹)</th><th>P.T (₹)</th><th>NET (₹)</th>
+                </tr>
+            </thead>
+            <tbody id="daCalcSheetBody"></tbody>
+            <tfoot><tr class="total-row" id="daCalcSheetTotalRow"></tr></tfoot>
+        </table>
+    </div>
+
+    <!-- 5. LIVE PREVIEW ANNEXURE 1 (DA CASE) -->
+    <h3>5. Live Preview: ANNEXURE - 1 (DA Case, Form Page -2)</h3>
+    <div class="annex1-card" id="daAnnex1VisualCard">
+        <div class="annex1-header">ANNEXURE - 1 <span class="page-no">Page -2</span></div>
+        <div class="annex1-field-row"><label>Name of the School:</label><span class="val-box" id="da_disp_school">TALDANGRA FULMATI HIGH SCHOOL [H.S.]</span></div>
+        <div class="annex1-field-row"><label>Name of the Employee:</label><span class="val-box" id="da_disp_staff">&nbsp;</span></div>
+        <div class="annex1-field-row" style="justify-content:space-between;">
+            <div><label style="min-width:210px; display:inline-block;">D.A. Arrear for the period from:</label><span class="val-box" id="da_disp_period">&nbsp;</span></div>
+            <span style="font-size:0.82rem;">in Rs.</span>
+        </div>
+
+        <div class="annex1-grid-layout">
+            <div>
+                <div style="font-size:0.8rem; font-weight:bold; margin-bottom:3px;">Arrear due on account of:</div>
+                <table class="annex1-table">
+                    <thead>
+                        <tr><th>Pay in Band</th><th>Grade Pay</th><th>AGP</th><th>Basic Pay</th><th>D.A</th><th>H.R.A</th><th>M.A</th><th>IR</th><th>Gross</th><th>C.P.F/G.P.F (Due)</th></tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>-</td><td>-</td><td>-</td><td id="da_cell_basic">-</td><td id="da_cell_da">0</td><td id="da_cell_hra">-</td><td id="da_cell_ma">-</td><td id="da_cell_ir">-</td><td id="da_cell_gross" style="font-weight:bold;">0</td><td id="da_cell_gpf">-</td></tr>
+                    </tbody>
+                </table>
+
+                <div class="annex1-middle-info" style="margin-top:15px;">
+                    <div style="display:flex; align-items:flex-start;"><span style="font-weight:bold; width:130px;">Reason of arrear:</span><span id="da_disp_reason" style="font-weight:bold; flex:1;">&nbsp;</span></div>
+                </div>
+
+                <div class="annex1-passed-line">Passed for RS. <span id="da_disp_passed_num">0</span> [ Rupees <span id="da_disp_passed_words">Zero Only</span> ].</div>
+            </div>
+
+            <div>
+                <div style="font-size:0.75rem; font-weight:bold; text-align:center; margin-bottom:2px;">To be credited to:</div>
+                <table class="annex1-subtable">
+                    <thead><tr><th>P.T (Auto)</th><th>C.P.F/G.P.F (Manual)</th><th>I.Tax (Manual)</th><th>Other (Manual)</th><th>Net Claim</th></tr></thead>
+                    <tbody>
+                        <tr><td id="da_cell_pt_credited">-</td><td id="da_cell_gpf_credited">-</td><td id="da_cell_oth_credited">-</td><td id="da_cell_other_credited">-</td><td id="da_cell_net_claim" style="font-weight:bold;">0</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="annex1-cert-grid">
+            <div>
+                <div style="font-weight:bold; margin-bottom:2px;">Certified that :-</div>
+                <ul class="annex1-cert-list">
+                    <li>1) The D.A. arrear claimed in this bill was not drawn before.</li>
+                    <li>2) The office copy agrees with the fair copy of the bill.</li>
+                    <li>3) The claim has been preferred with reference to Acquittance Roll &amp; other records.</li>
+                    <li>4) Necessary notes have been kept in O/C to avoid double payment.</li>
+                    <li>5) I.Tax, P.Tax, GPF will be deducted &amp; deposited through challan.</li>
+                    <li>6) Admissibility checked with reference to Govt Orders / D.A. rate schedule.</li>
+                </ul>
+            </div>
+            <div style="text-align:center; display:flex; flex-direction:column; justify-content:space-between; padding-top:10px;">
+                <div><b>Checked, Verified and found admissible and correct.</b></div>
+                <div style="border-top:1px solid #000; padding-top:2px; font-weight:bold;">A.D./D.D. (Accounts)</div>
+            </div>
+        </div>
+
+        <div class="annex1-verify-box">
+            Detail Drawn and Due Statement of D.A. Arrear of <span id="da_box_staff">&nbsp;</span> of <span id="da_box_school">&nbsp;</span> for the period : <span id="da_box_period">&nbsp;</span> has been duly Checked and Verified.
+        </div>
+
+        <div class="annex1-sig-row">
+            <div style="width:30%;">____________________________________<br>Signature of Secretary/D.D.O</div>
+            <div style="width:30%;">____________________________________<br>D.I. of Schools(S.E)<br>Seal</div>
+            <div style="width:30%;">____________________________________<br>AD/DD/Accounts<br>Seal</div>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn-doc" onclick="showDoc('daannex')">Preview / Print DA Case Annexure</button>
+        <button class="btn-print" onclick="showDoc('dacalc')">Preview / Print DA Case Calculation Sheet</button>
+        <button class="btn-doc" style="background:#0284c7;" onclick="showDoc('daannex1')">Preview / Print DA Case ANNEXURE-1</button>
+        <button class="btn-excel" onclick="exportDaCaseExcel()">Export to Excel (Annexure + Calculation Sheet)</button>
+    </div>
+
+</div>
+
 </div><!-- /container -->
 
 <!-- PRINT MODAL OVERLAY -->
@@ -979,14 +1161,13 @@ function ceilToNext10(value) { return Math.ceil(value / 10) * 10; }
 function switchTab(tabId) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    
-    if (tabId === 'tabPayable') {
-        document.querySelectorAll('.tab-btn')[0].classList.add('active');
-        document.getElementById('tabPayable').classList.add('active');
-    } else {
-        document.querySelectorAll('.tab-btn')[1].classList.add('active');
-        document.getElementById('tabOverdrawn').classList.add('active');
-    }
+
+    const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+    if (btn) btn.classList.add('active');
+    const content = document.getElementById(tabId);
+    if (content) content.classList.add('active');
+
+    if (tabId === 'tabDaCase') { autoDeriveDaBasicSegments(); }
 }
 
 // SYNC SHARED FIELDS BETWEEN TAB 1 & TAB 2
@@ -1015,8 +1196,14 @@ function syncSharedFields() {
     const tenderedStr = `HM / Secy, ${sName}, Block-${blk}, Dist.-${dist}`;
     if (document.getElementById('chlTenderedBy')) document.getElementById('chlTenderedBy').value = tenderedStr;
 
+    // DA CASE TAB (Tab 3) SYNC
+    if (document.getElementById('daSchoolName')) document.getElementById('daSchoolName').value = sName;
+    if (document.getElementById('daEmpName')) document.getElementById('daEmpName').value = stName;
+    if (document.getElementById('daEmpDesig')) document.getElementById('daEmpDesig').value = stDesig;
+
     updateAll();
     refreshAllOverdrawn();
+    if (typeof generateDaCaseTable === 'function') generateDaCaseTable();
 }
 
 function val(id) { const e = document.getElementById(id); return e ? e.value : ''; }
@@ -1946,6 +2133,10 @@ function processFixationTimeline() {
     window.pfDOR = dor;
 
     if (typeof syncFixationToArrear === 'function') syncFixationToArrear();
+    // Refresh DA Case Basic Pay segments straight from this freshly-generated full-career
+    // timeline every time pay tables are (re)generated -- independent of whether Tab-1's
+    // own Arrear From/To fields are filled in (see autoDeriveDaBasicSegments note above).
+    if (typeof autoDeriveDaBasicSegments === 'function') autoDeriveDaBasicSegments();
 }
 
 function monthWeightedBasicFromTimeline(y, m, fallbackBasic) {
@@ -1985,7 +2176,7 @@ function ptSlab(gross) {
 }
 
 let arrearRows = [];
-let calcResult = { basic: 8977, da: 1616, hra: 1077, gross: 11670, pt:0, gpf:0, it:0, net: 11670 };
+let calcResult = { basic: 8977, da: 1616, hra: 1077, ma:0, ir:0, gross: 11670, pt:0, gpf:0, it:0, oth:0, net: 11670 };
 
 function generateArrearTable() {
     const fStr = val('arrearFrom'), tStr = val('arrearTo');
@@ -1996,12 +2187,16 @@ function generateArrearTable() {
     const benefitDate = new Date(val('benefitDate') + 'T00:00:00');
 
     const prevB = num('prevBasic'), currB = num('currBasic');
-    const defGpf = num('defaultGpf'), defIt = num('defaultIt');
+    const defGpf = num('defaultGpf'), defIt = num('defaultIt'), defOth = num('defaultOth');
 
     const hasTables = (window.pfTimeline19 && window.pfTimeline19.length > 0);
     document.getElementById('fixationBridgeStatus').innerHTML = hasTables
         ? ('<span style="color:#16a34a;">&#10003; Admissible Salary is being auto-pulled from Generated ROPA Pay Tables across all eras (1998 / 2009 / 2019).</span>')
         : '<span style="color:#c2410c;">&#9888; Pay Fixation Table not generated yet &mdash; using manual fields as fallback. Click "Generate Pay Tables" above.</span>';
+
+    // Basic Pay as on 01-01-2016 (Grade Pay counted in full), used as the fixed base
+    // for the 10% Interim Relief (I.R.) default across Jan-2016 to Dec-2019.
+    const basicOn1Jan2016 = hasTables ? monthWeightedBasicFromTimeline(2016, 1, prevB) : prevB;
 
     arrearRows = [];
     let curr = new Date(fDate.getFullYear(), fDate.getMonth(), 1);
@@ -2025,16 +2220,38 @@ function generateArrearTable() {
             }
         }
 
+        const defaultMA = defaultMaForMonth(y, m);
+        const defaultIR = defaultIrForMonth(y, m, basicOn1Jan2016);
+
         arrearRows.push({
             y, m,
             admBasic, drBasic,
             admGPF: defGpf, drGPF: defGpf,
             admIT: defIt, drIT: defIt,
-            admMA: 0, drMA: 0
+            admOTH: defOth, drOTH: defOth,
+            admMA: defaultMA, drMA: defaultMA,
+            admIR: defaultIR, drIR: defaultIR
         });
         curr.setMonth(curr.getMonth() + 1);
     }
     renderDashboardTable();
+    if (typeof autoDeriveDaBasicSegments === 'function') autoDeriveDaBasicSegments();
+}
+
+// M.A. default: Rs. 300/month under ROPA-2009 era (before 01-01-2020),
+// Rs. 500/month under ROPA-2019 era (from 01-01-2020) — always editable per row.
+function defaultMaForMonth(y, m) {
+    return (new Date(y, m - 1, 1) < new Date(2020, 0, 1)) ? 300 : 500;
+}
+
+// I.R. (Interim Relief) default: 10% of Basic Pay as on 01-01-2016 (Grade Pay in full),
+// fixed for the Jan-2016 to Dec-2019 window, 0 outside it — always editable per row.
+function defaultIrForMonth(y, m, basicOn1Jan2016) {
+    const d = new Date(y, m - 1, 1);
+    if (d >= new Date(2016, 0, 1) && d <= new Date(2019, 11, 1)) {
+        return Math.round(basicOn1Jan2016 * 0.10);
+    }
+    return 0;
 }
 
 function computeRow(row) {
@@ -2043,33 +2260,39 @@ function computeRow(row) {
 
     const admMA = row.admMA || 0;
     const drMA = row.drMA || 0;
+    const admIR = row.admIR || 0;
+    const drIR = row.drIR || 0;
+    const admOTH = row.admOTH || 0;
+    const drOTH = row.drOTH || 0;
 
     const admDA = Math.round(row.admBasic * da);
     const admHRA = Math.round(row.admBasic * hraR);
-    const admGross = row.admBasic + admDA + admHRA + admMA;
+    const admGross = row.admBasic + admDA + admHRA + admMA + admIR;
     const admPT = ptSlab(admGross);
-    const admNet = admGross - row.admGPF - row.admIT - admPT;
+    const admNet = admGross - row.admGPF - row.admIT - admOTH - admPT;
 
     const drDA = Math.round(row.drBasic * da);
     const drHRA = Math.round(row.drBasic * hraR);
-    const drGross = row.drBasic + drDA + drHRA + drMA;
+    const drGross = row.drBasic + drDA + drHRA + drMA + drIR;
     const drPT = ptSlab(drGross);
-    const drNet = drGross - row.drGPF - row.drIT - drPT;
+    const drNet = drGross - row.drGPF - row.drIT - drOTH - drPT;
 
     const dueBasic = row.admBasic - row.drBasic;
     const dueDA = admDA - drDA;
     const dueHRA = admHRA - drHRA;
     const dueMA = admMA - drMA;
+    const dueIR = admIR - drIR;
     const dueGross = admGross - drGross;
     const dueGPF = row.admGPF - row.drGPF;
     const dueIT = row.admIT - row.drIT;
+    const dueOTH = admOTH - drOTH;
     const duePT = admPT - drPT;
     const dueNet = admNet - drNet;
 
     return {
-        admBasic: row.admBasic, admDA, admHRA, admMA, admGross, admGPF: row.admGPF, admIT: row.admIT, admPT, admNet,
-        drBasic: row.drBasic, drDA, drHRA, drMA, drGross, drGPF: row.drGPF, drIT: row.drIT, drPT, drNet,
-        dueBasic, dueDA, dueHRA, dueMA, dueGross, dueGPF, dueIT, duePT, dueNet
+        admBasic: row.admBasic, admDA, admHRA, admMA, admIR, admGross, admGPF: row.admGPF, admIT: row.admIT, admOTH, admPT, admNet,
+        drBasic: row.drBasic, drDA, drHRA, drMA, drIR, drGross, drGPF: row.drGPF, drIT: row.drIT, drOTH, drPT, drNet,
+        dueBasic, dueDA, dueHRA, dueMA, dueIR, dueGross, dueGPF, dueIT, dueOTH, duePT, dueNet
     };
 }
 
@@ -2082,13 +2305,13 @@ function renderDashboardTable() {
     const tbody = document.getElementById('dashboardArrearBody');
     tbody.innerHTML = '';
 
-    let sumBasic = 0, sumDA = 0, sumHRA = 0, sumGross = 0, sumPT = 0, sumGPF = 0, sumIT = 0, sumNet = 0;
+    let sumBasic = 0, sumDA = 0, sumHRA = 0, sumMA = 0, sumIR = 0, sumGross = 0, sumPT = 0, sumGPF = 0, sumIT = 0, sumOTH = 0, sumNet = 0;
 
     arrearRows.forEach((row, idx) => {
         let c = computeRow(row);
-        sumBasic += c.dueBasic; sumDA += c.dueDA; sumHRA += c.dueHRA;
+        sumBasic += c.dueBasic; sumDA += c.dueDA; sumHRA += c.dueHRA; sumMA += c.dueMA; sumIR += c.dueIR;
         sumGross += c.dueGross; sumPT += c.duePT; sumGPF += c.dueGPF;
-        sumIT += c.dueIT; sumNet += c.dueNet;
+        sumIT += c.dueIT; sumOTH += c.dueOTH; sumNet += c.dueNet;
 
         const mName = monthLabel(row.y, row.m);
 
@@ -2099,9 +2322,11 @@ function renderDashboardTable() {
             <td><input class="tbl-input" data-rowid="${idx}" data-field="admBasic" value="${row.admBasic}" onchange="updateRowField(${idx},'admBasic',this.value)"></td>
             <td>${c.admDA}</td><td>${c.admHRA}</td>
             <td><input class="tbl-input" data-rowid="${idx}" data-field="admMA" value="${row.admMA||0}" onchange="updateRowField(${idx},'admMA',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="admIR" value="${row.admIR||0}" onchange="updateRowField(${idx},'admIR',this.value)"></td>
             <td><strong>${c.admGross}</strong></td>
             <td><input class="tbl-input" data-rowid="${idx}" data-field="admGPF" value="${row.admGPF}" onchange="updateRowField(${idx},'admGPF',this.value)"></td>
             <td><input class="tbl-input" data-rowid="${idx}" data-field="admIT" value="${row.admIT}" onchange="updateRowField(${idx},'admIT',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="admOTH" value="${row.admOTH||0}" onchange="updateRowField(${idx},'admOTH',this.value)"></td>
             <td>${c.admPT}</td><td><strong>${c.admNet}</strong></td>`;
 
         const trDr = document.createElement('tr'); trDr.className = 'drawn-row';
@@ -2110,22 +2335,24 @@ function renderDashboardTable() {
             <td><input class="tbl-input" data-rowid="${idx}" data-field="drBasic" value="${row.drBasic}" onchange="updateRowField(${idx},'drBasic',this.value)"></td>
             <td>${c.drDA}</td><td>${c.drHRA}</td>
             <td><input class="tbl-input" data-rowid="${idx}" data-field="drMA" value="${row.drMA||0}" onchange="updateRowField(${idx},'drMA',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="drIR" value="${row.drIR||0}" onchange="updateRowField(${idx},'drIR',this.value)"></td>
             <td><strong>${c.drGross}</strong></td>
             <td><input class="tbl-input" data-rowid="${idx}" data-field="drGPF" value="${row.drGPF}" onchange="updateRowField(${idx},'drGPF',this.value)"></td>
             <td><input class="tbl-input" data-rowid="${idx}" data-field="drIT" value="${row.drIT}" onchange="updateRowField(${idx},'drIT',this.value)"></td>
+            <td><input class="tbl-input" data-rowid="${idx}" data-field="drOTH" value="${row.drOTH||0}" onchange="updateRowField(${idx},'drOTH',this.value)"></td>
             <td>${c.drPT}</td><td><strong>${c.drNet}</strong></td>`;
 
         const trDue = document.createElement('tr'); trDue.className = 'due-row';
         trDue.innerHTML = `
             <td><strong>Due (Arrear)</strong></td>
-            <td>${c.dueBasic}</td><td>${c.dueDA}</td><td>${c.dueHRA}</td><td>${c.dueMA}</td><td><strong>${c.dueGross}</strong></td>
-            <td>${c.dueGPF}</td><td>${c.dueIT}</td><td>${c.duePT}</td>
+            <td>${c.dueBasic}</td><td>${c.dueDA}</td><td>${c.dueHRA}</td><td>${c.dueMA}</td><td>${c.dueIR}</td><td><strong>${c.dueGross}</strong></td>
+            <td>${c.dueGPF}</td><td>${c.dueIT}</td><td>${c.dueOTH}</td><td>${c.duePT}</td>
             <td style="font-weight:800; color:#9a3412;">${c.dueNet}</td>`;
 
         tbody.appendChild(trAdm); tbody.appendChild(trDr); tbody.appendChild(trDue);
     });
 
-    calcResult = { basic: sumBasic, da: sumDA, hra: sumHRA, gross: sumGross, pt: sumPT, gpf: sumGPF, it: sumIT, net: sumNet };
+    calcResult = { basic: sumBasic, da: sumDA, hra: sumHRA, ma: sumMA, ir: sumIR, gross: sumGross, pt: sumPT, gpf: sumGPF, it: sumIT, oth: sumOTH, net: sumNet };
     updateAll();
 }
 
@@ -2164,11 +2391,14 @@ function updateAll() {
     if (document.getElementById('cell_basic')) document.getElementById('cell_basic').innerText = calcResult.basic.toLocaleString('en-IN');
     if (document.getElementById('cell_da')) document.getElementById('cell_da').innerText = calcResult.da.toLocaleString('en-IN');
     if (document.getElementById('cell_hra')) document.getElementById('cell_hra').innerText = calcResult.hra.toLocaleString('en-IN');
+    if (document.getElementById('cell_ma')) document.getElementById('cell_ma').innerText = calcResult.ma ? calcResult.ma.toLocaleString('en-IN') : '-';
+    if (document.getElementById('cell_ir')) document.getElementById('cell_ir').innerText = calcResult.ir ? calcResult.ir.toLocaleString('en-IN') : '-';
     if (document.getElementById('cell_gross')) document.getElementById('cell_gross').innerText = calcResult.gross.toLocaleString('en-IN');
 
     if (document.getElementById('cell_pt_credited')) document.getElementById('cell_pt_credited').innerText = calcResult.pt ? calcResult.pt.toLocaleString('en-IN') : '-';
     if (document.getElementById('cell_gpf_credited')) document.getElementById('cell_gpf_credited').innerText = calcResult.gpf ? calcResult.gpf.toLocaleString('en-IN') : '-';
-    if (document.getElementById('cell_oth_credited')) document.getElementById('cell_oth_credited').innerText = calcResult.it ? calcResult.it.toLocaleString('en-IN') : '-';
+    if (document.getElementById('cell_itax_credited')) document.getElementById('cell_itax_credited').innerText = calcResult.it ? calcResult.it.toLocaleString('en-IN') : '-';
+    if (document.getElementById('cell_oth_credited')) document.getElementById('cell_oth_credited').innerText = calcResult.oth ? calcResult.oth.toLocaleString('en-IN') : '-';
 
     if (document.getElementById('cell_net_claim')) document.getElementById('cell_net_claim').innerText = calcResult.net.toLocaleString('en-IN');
     if (document.getElementById('cell_actual_claim')) document.getElementById('cell_actual_claim').innerText = calcResult.net.toLocaleString('en-IN');
@@ -2210,6 +2440,9 @@ function autoSyncOverdrawnFromTab1() {
 
     let fetched = [];
 
+    const basicOn1Jan2016_od = (window.pfTimeline19 && window.pfTimeline19.length > 0)
+        ? monthWeightedBasicFromTimeline(2016, 1, num('prevBasic')) : num('prevBasic');
+
     // 1. Check if current arrearRows has overdrawn months (Drawn > Admissible)
     arrearRows.forEach(r => {
         let monthDate = new Date(r.y, r.m - 1, 1);
@@ -2223,12 +2456,14 @@ function autoSyncOverdrawnFromTab1() {
 
         if (c.drGross > c.admGross || c.drBasic > c.admBasic) {
             let mStr = `${r.y}-${String(r.m).padStart(2,'0')}`;
+            let defMA = defaultMaForMonth(r.y, r.m);
+            let defIR = defaultIrForMonth(r.y, r.m, basicOn1Jan2016_od);
             fetched.push({
                 id: ++odSeq, month: mStr, band: admBand, scale: admScale,
                 drPayBand: r.drBasic - 4100 > 0 ? r.drBasic - 4100 : r.drBasic,
                 drGradePay: 4100, // DEFAULT DRAWN GRADE PAY = 4100
-                drDP: 0, drDA: c.drDA, drHRA: c.drHRA, drMA: 300, drIR: 0,
-                admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: c.admDA, admHRA: c.admHRA, admMA: 290, admIR: 0,
+                drDP: 0, drDA: c.drDA, drHRA: c.drHRA, drMA: defMA, drIR: defIR,
+                admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: c.admDA, admHRA: c.admHRA, admMA: defMA, admIR: defIR,
                 remarks: `Ref Generated Table [${snap ? snap.era : 'ROPA'}]: Overdrawn by Rs. ${(c.drGross - c.admGross).toLocaleString('en-IN')}`
             });
         }
@@ -2306,11 +2541,14 @@ function autoSyncOverdrawnFromTab1() {
             let admDA = Math.round(admBasic * daR);
             let admHRA = Math.round(admBasic * hraR);
 
+            let defMA_range = defaultMaForMonth(y, m);
+            let defIR_range = defaultIrForMonth(y, m, basicOn1Jan2016_od);
+
             fetched.push({
                 id: ++odSeq, month: mStr, band: bandStr, scale: scaleStr,
                 drPayBand: fullPB, drGradePay: 4100, // DEFAULT DRAWN GRADE PAY = 4100
-                drDP: 0, drDA: drDA, drHRA: drHRA, drMA: 300, drIR: 0,
-                admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: Math.round(300 * admDays / tDays), admIR: 0,
+                drDP: 0, drDA: drDA, drHRA: drHRA, drMA: defMA_range, drIR: defIR_range,
+                admPayBand: admPB, admGradePay: admGP, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: Math.round(defMA_range * admDays / tDays), admIR: defIR_range,
                 remarks: `Pay admissible for ${admDays} days\nDue to ${String(lwpDaysInMonth).padStart(2,'0')} day(s) LWP`
             });
 
@@ -2351,6 +2589,7 @@ function addOverdrawnRow() {
     let admPayBand, admGradePay, admDA, admHRA, admMA;
     let remarksText;
 
+    let arrIR = null;
     if (arrMatch) {
         const c = computeRow(arrMatch);
         // Split basic into Pay Band + Grade Pay isn't tracked in the arrear table,
@@ -2358,6 +2597,7 @@ function addOverdrawnRow() {
         // leave Grade Pay at 0 -- the Rev. Basic total (PayBand + GradePay) stays correct.
         drPayBand = c.drBasic; drGradePay = 0; drDA = c.drDA; drHRA = c.drHRA; drMA = c.drMA;
         admPayBand = c.admBasic; admGradePay = 0; admDA = c.admDA; admHRA = c.admHRA; admMA = c.admMA;
+        arrIR = { adm: c.admIR, dr: c.drIR };
         remarksText = 'Auto-fetched from Arrear Table (Tab 1) -- fraction-day / mixed basic pay for this month applied';
     } else {
         let admPB = snap ? snap.payBand : 11252;
@@ -2365,22 +2605,32 @@ function addOverdrawnRow() {
         let defaultDrGP = 4100; // DEFAULT DRAWN GRADE PAY = 4100
         let defaultDrPB = 11640;
         let daPct = (m >= "2011-01") ? 0.35 : 0.27;
+        let defMA = defaultMaForMonth(y, mm);
 
         drPayBand = defaultDrPB; drGradePay = defaultDrGP;
         drDA = Math.round((defaultDrPB + defaultDrGP) * daPct);
         drHRA = Math.round((defaultDrPB + defaultDrGP) * 0.12);
-        drMA = 300;
+        drMA = defMA;
         admPayBand = admPB; admGradePay = admGP;
         admDA = Math.round((admPB + admGP) * daPct);
         admHRA = Math.round((admPB + admGP) * 0.12);
-        admMA = 290;
+        admMA = defMA;
         remarksText = snap ? `Auto-fetched Admissible Pay from generated ${snap.era} Table` : '';
+    }
+
+    let drIRVal, admIRVal;
+    if (arrIR) {
+        drIRVal = arrIR.dr; admIRVal = arrIR.adm;
+    } else {
+        const basicOn1Jan2016_add = (window.pfTimeline19 && window.pfTimeline19.length > 0)
+            ? monthWeightedBasicFromTimeline(2016, 1, num('prevBasic')) : num('prevBasic');
+        drIRVal = admIRVal = defaultIrForMonth(y, mm, basicOn1Jan2016_add);
     }
 
     odRows.push({
         id: ++odSeq, month: m, band: bandStr, scale: scaleStr,
-        drPayBand: drPayBand, drGradePay: drGradePay, drDP: 0, drDA: drDA, drHRA: drHRA, drMA: drMA, drIR: 0,
-        admPayBand: admPayBand, admGradePay: admGradePay, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: admMA, admIR: 0,
+        drPayBand: drPayBand, drGradePay: drGradePay, drDP: 0, drDA: drDA, drHRA: drHRA, drMA: drMA, drIR: drIRVal,
+        admPayBand: admPayBand, admGradePay: admGradePay, admDP: 0, admDA: admDA, admHRA: admHRA, admMA: admMA, admIR: admIRVal,
         remarks: remarksText
     });
     renderOdTable();
@@ -2490,6 +2740,732 @@ function renderOdTable() {
 
 function refreshAllOverdrawn() {
     renderOdTable();
+}
+
+// ===================== TAB 3: DA CASE (AUTO ARREAR CALCULATION) =====================
+// Historical D.A. rate change points, as fraction of Basic Pay: [ 'YYYY-MM', rate ]
+// ROPA-2009 era (Apr-2008 to Dec-2019)
+const DA09_DRAWN = [
+    ['2008-04',0.02],['2008-06',0.06],['2008-11',0.09],['2009-03',0.12],['2009-04',0.16],
+    ['2009-12',0.22],['2010-04',0.27],['2010-12',0.35],['2012-01',0.45],['2013-01',0.52],
+    ['2014-01',0.58],['2015-01',0.65],['2016-01',0.75],['2017-01',0.85],['2018-01',1.00],['2019-01',1.25]
+];
+const DA09_DUE = [
+    ['2008-04',0.12],['2008-07',0.16],['2009-01',0.22],['2009-07',0.27],['2010-01',0.35],
+    ['2010-07',0.45],['2011-01',0.51],['2011-07',0.58],['2012-01',0.65],['2012-07',0.72],
+    ['2013-01',0.80],['2013-07',0.90],['2014-01',1.00],['2014-07',1.07],['2015-01',1.13],
+    ['2015-07',1.19],['2016-01',1.25],['2016-07',1.32],['2017-01',1.36],['2017-07',1.39],
+    ['2018-01',1.42],['2018-07',1.48],['2019-01',1.54],['2019-07',1.64]
+];
+// ROPA-2019 era (Jan-2020 onward)
+const DA19_DRAWN = [
+    ['2020-01',0.00],['2021-01',0.03],['2023-03',0.06],['2024-01',0.10],['2024-04',0.14],['2025-04',0.18]
+];
+const DA19_DUE = [
+    ['2020-01',0.17],['2021-07',0.31],['2022-01',0.34],['2022-07',0.38],['2023-01',0.42],
+    ['2023-07',0.46],['2024-01',0.50],['2024-07',0.53]
+];
+
+function rateForMonth(table, monthStr) {
+    let applicable = table[0][1];
+    for (const [from, rate] of table) {
+        if (from <= monthStr) applicable = rate; else break;
+    }
+    return applicable;
+}
+
+// Beyond the tabulated history, the last known rate is held flat -- the Calculation
+// Sheet / Annexure both note this so the preparer can confirm the latest sanctioned rate.
+function getDaRates(monthStr) {
+    if (monthStr < '2020-01') {
+        return { drawn: rateForMonth(DA09_DRAWN, monthStr), due: rateForMonth(DA09_DUE, monthStr) };
+    }
+    return { drawn: rateForMonth(DA19_DRAWN, monthStr), due: rateForMonth(DA19_DUE, monthStr) };
+}
+
+let daBasicRows = [];
+let daBasicSeq = 1;
+
+function addDaBasicRow(prefill) {
+    const row = Object.assign({ id: daBasicSeq++, from: '2008-04', basic: 6000 }, prefill || {});
+    daBasicRows.push(row);
+    daBasicRows.sort((a, b) => a.from.localeCompare(b.from));
+    renderDaBasicTable();
+    generateDaCaseTable();
+}
+
+function removeDaBasicRow(id) {
+    daBasicRows = daBasicRows.filter(r => r.id !== id);
+    renderDaBasicTable();
+    generateDaCaseTable();
+}
+
+function updateDaBasicField(id, field, v) {
+    const row = daBasicRows.find(r => r.id === id);
+    if (!row) return;
+    row[field] = (field === 'basic') ? (parseFloat(v) || 0) : v;
+    if (field === 'from') daBasicRows.sort((a, b) => a.from.localeCompare(b.from));
+    withFocusPreserved(renderDaBasicTable);
+    generateDaCaseTable();
+}
+
+function renderDaBasicTable() {
+    const wrap = document.getElementById('daBasicTableWrap');
+    if (!wrap) return;
+    if (daBasicRows.length === 0) {
+        wrap.innerHTML = '<div style="font-size:0.85rem; color:#475569; padding:6px 0;">No Basic Pay segments added. Click "+ Add Basic Pay Segment" for the starting Basic Pay, and one more row for each later revision/increment.</div>';
+        return;
+    }
+    let rowsHtml = daBasicRows.map(r => `
+        <tr>
+            <td style="padding:4px;"><input type="month" class="tbl-input" style="width:120px;" data-rowid="${r.id}" data-field="from" value="${r.from}" onchange="updateDaBasicField(${r.id},'from',this.value)"></td>
+            <td style="padding:4px;"><input type="number" class="tbl-input" style="width:110px;" data-rowid="${r.id}" data-field="basic" value="${r.basic}" onchange="updateDaBasicField(${r.id},'basic',this.value)"></td>
+            <td style="padding:4px; text-align:center;"><button type="button" class="btn-del" onclick="removeDaBasicRow(${r.id})">Del</button></td>
+        </tr>`).join('');
+    wrap.innerHTML = `
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem;">
+            <thead>
+                <tr style="background:#cbd5e1;">
+                    <th style="padding:4px;">Effective From (Month)</th>
+                    <th style="padding:4px;">Basic Pay (₹) from this month onward</th>
+                    <th style="padding:4px;">&nbsp;</th>
+                </tr>
+            </thead>
+            <tbody>${rowsHtml}</tbody>
+        </table>`;
+}
+
+function getBasicForMonth(monthStr) {
+    if (daBasicRows.length === 0) return 0;
+    let applicable = daBasicRows[0].basic;
+    for (const r of daBasicRows) {
+        if (r.from <= monthStr) applicable = r.basic; else break;
+    }
+    return applicable;
+}
+
+// DA-Case-only snapshot lookup. For DA Case purposes, the WHOLE ROPA-2009 D.A. regime
+// (Apr-2008 to Dec-2019) is priced strictly off the ROPA-2009 Pay Timeline -- NEVER off
+// ROPA-1998 -- because ROPA-09 revised Basic Pay is notionally effective from 01-01-2006
+// and D.A. arrear is measured on that revised Basic Pay throughout Apr-2008 to Dec-2019,
+// irrespective of the actual ROPA-98/ROPA-09 option/changeover date used elsewhere (Tab 1's
+// own Admissible column, which correctly keeps ROPA-98 pay up to 31.03.2009 for fixation
+// purposes). From Jan-2020 onward the DA Case switches to the ROPA-2019 Pay Timeline.
+function getAdmissibleSnapshotForDaCase(d) {
+    if (d <= new Date(2019, 11, 31)) {
+        if (!window.pfTimeline09 || window.pfTimeline09.length === 0) return null;
+        let applicable = window.pfTimeline09[0];
+        for (let r of window.pfTimeline09) {
+            if (new Date(r.date) <= d) applicable = r; else break;
+        }
+        const bp = applicable.snapBandPay || 0;
+        const gp = applicable.snapGp || 0;
+        return { revBasic: bp + gp };
+    }
+    if (!window.pfTimeline19 || window.pfTimeline19.length === 0) return null;
+    let applicable = window.pfTimeline19[0];
+    for (let r of window.pfTimeline19) {
+        if (new Date(r.date) <= d) applicable = r; else break;
+    }
+    const bVal = parseInt(String(applicable.basicDisplay || applicable.snapBasicPay || 0).replace(/,/g,''), 10) || 0;
+    return { revBasic: bVal };
+}
+
+function monthWeightedBasicFromTimelineDaCase(y, m, fallbackBasic) {
+    const totalDays = daysInMonth(y, m);
+    let sum = 0;
+    for (let d = 1; d <= totalDays; d++) {
+        const dayDate = new Date(y, m - 1, d);
+        const snap = getAdmissibleSnapshotForDaCase(dayDate);
+        sum += snap ? snap.revBasic : fallbackBasic;
+    }
+    return Math.round(sum / totalDays);
+}
+
+// Auto-fetches Basic Pay Segments for the DA Case tab straight from the FULL career
+// Pay Fixation Timeline (window.pfTimeline98 / 09 / 19, built by "Generate Pay Tables"
+// in Tab 1) -- walking month-by-month from DOJ to DOR via getAdmissibleSnapshotForDate,
+// the same source Tab-1's own Admissible column uses. This is intentionally NOT read
+// from arrearRows (Tab-1's Arrear From/To window), because that window is usually a
+// short claim-specific slice (e.g. one arrear spell) and does not cover the full
+// 2008-2019 / 2020-onward span a DA Case typically needs -- reading from arrearRows
+// left the DA Case Basic Pay wrong (flat/stale) for any month outside Tab-1's chosen
+// Arrear period. Detects every month where the admissible Basic Pay changes and turns
+// each change-point into a segment. Falls back to two sample segments only if no pay
+// table has been generated yet and the list is still empty.
+function autoDeriveDaBasicSegments() {
+    const hasTimeline = (window.pfTimeline98 && window.pfTimeline98.length > 0) ||
+                         (window.pfTimeline09 && window.pfTimeline09.length > 0) ||
+                         (window.pfTimeline19 && window.pfTimeline19.length > 0);
+
+    if (!hasTimeline) {
+        if (daBasicRows.length === 0) {
+            daBasicRows.push({ id: daBasicSeq++, from: '2008-04', basic: 6000 });
+            daBasicRows.push({ id: daBasicSeq++, from: '2020-01', basic: 60800 });
+            renderDaBasicTable();
+            generateDaCaseTable();
+        }
+        return false;
+    }
+
+    const dojVal = val('doj');
+    if (!dojVal) return false;
+    const doj = new Date(dojVal + 'T00:00:00');
+    const dor = window.pfDOR || (val('daTo') ? new Date(val('daTo') + '-01T00:00:00') : null);
+    if (!dor) return false;
+
+    let y = doj.getFullYear(), m = doj.getMonth() + 1;
+    const endY = dor.getFullYear(), endM = dor.getMonth() + 1;
+
+    const segments = [];
+    let lastBasic = null;
+    let guard = 0;
+    while ((y < endY || (y === endY && m <= endM)) && guard < 1000) {
+        const basic = monthWeightedBasicFromTimelineDaCase(y, m, 0);
+        if (basic > 0 && basic !== lastBasic) {
+            segments.push({ from: `${y}-${String(m).padStart(2, '0')}`, basic });
+            lastBasic = basic;
+        }
+        m++; if (m > 12) { m = 1; y++; }
+        guard++;
+    }
+
+    if (segments.length === 0) return false;
+
+    daBasicRows = segments.map(s => ({ id: daBasicSeq++, from: s.from, basic: s.basic }));
+    renderDaBasicTable();
+    generateDaCaseTable();
+    return true;
+}
+
+function monthRange(fromStr, toStr) {
+    const months = [];
+    let [y, m] = fromStr.split('-').map(Number);
+    const [ty, tm] = toStr.split('-').map(Number);
+    if (!y || !m || !ty || !tm) return months;
+    let guard = 0;
+    while ((y < ty || (y === ty && m <= tm)) && guard < 1000) {
+        months.push(`${y}-${String(m).padStart(2, '0')}`);
+        m++; if (m > 12) { m = 1; y++; }
+        guard++;
+    }
+    return months;
+}
+
+let daCaseRows = [];
+let daCaseRowData = {}; // per-month manual overrides, keyed by "YYYY-MM": {gpf, itax, oth, ma, ir} -- persists across regenerate so GPF/I.Tax/OTH/M.A/I.R. can vary month to month
+
+function generateDaCaseTable() {
+    const from = val('daFrom'), to = val('daTo');
+    const tbody = document.getElementById('daCaseBody');
+    if (!tbody) return; // Tab 3 not yet in DOM
+    if (!from || !to || daBasicRows.length === 0) {
+        tbody.innerHTML = '';
+        const totalRow = document.getElementById('daCaseTotalRow');
+        if (totalRow) totalRow.innerHTML = '';
+        return;
+    }
+
+    const hraRatePct = num('daHraRate');
+    const maRaw = val('daMa'); // default (blank/placeholder = auto 300 ROPA-09 / 500 ROPA-19) applied only to months with no per-row override
+    const irRaw = val('daIr'); // default (blank/placeholder = auto 10% of Basic as on 1.1.2016, Jan16-Dec19) applied only to months with no per-row override
+    const gpfDefault = num('daGpf');
+    const itaxDefault = num('daItax');
+    const othDefault = num('daOth');
+
+    const basicOn1Jan2016_da = getBasicForMonth('2016-01') || getBasicForMonth(from);
+
+    const months = monthRange(from, to);
+    daCaseRows = months.map(mStr => {
+        const basic = getBasicForMonth(mStr);
+        const { drawn, due } = getDaRates(mStr);
+        const drawnDA = Math.round(basic * drawn);
+        const dueDA = Math.round(basic * due);
+        const [yy, mm] = mStr.split('-').map(Number);
+
+        // Basic Pay, H.R.A, M.A, I.R., G.P.F., I.Tax and Other are unaffected by a pure
+        // D.A.-rate correction, so they carry the SAME value in the Admissible and Drawn
+        // rows. Only D.A. differs directly; Gross (and therefore P.Tax slab & Net) can
+        // still shift because Gross = Basic + D.A. + H.R.A + M.A. + I.R.
+        // GPF, I.Tax, Other, M.A. and I.R. all default per the rules/global fields above,
+        // but each is independently editable per row below -- so they may vary month to month.
+        const ov = daCaseRowData[mStr] || {};
+        const hra = Math.round(basic * hraRatePct / 100);
+        const ma = (ov.ma !== undefined) ? ov.ma : ((maRaw === '' || maRaw === null) ? defaultMaForMonth(yy, mm) : (parseFloat(maRaw) || 0));
+        const ir = (ov.ir !== undefined) ? ov.ir : ((irRaw === '' || irRaw === null) ? defaultIrForMonth(yy, mm, basicOn1Jan2016_da) : (parseFloat(irRaw) || 0));
+        const gpf = (ov.gpf !== undefined) ? ov.gpf : gpfDefault;
+        const itax = (ov.itax !== undefined) ? ov.itax : itaxDefault;
+        const oth = (ov.oth !== undefined) ? ov.oth : othDefault;
+
+        const admGross = basic + dueDA + hra + ma + ir;
+        const drGross = basic + drawnDA + hra + ma + ir;
+        const admPT = ptSlab(admGross);
+        const drPT = ptSlab(drGross);
+        const admNet = admGross - gpf - itax - oth - admPT;
+        const drNet = drGross - gpf - itax - oth - drPT;
+
+        return {
+            month: mStr, basic, drawnPct: drawn, drawnDA, duePct: due, dueDA, arrear: dueDA - drawnDA,
+            hra, ma, ir, gpf, it: itax, oth,
+            admGross, drGross, admPT, drPT, admNet, drNet,
+            dueGross: admGross - drGross, duePT: admPT - drPT, dueNet: admNet - drNet
+        };
+    });
+
+    let sums = { drawnDA: 0, dueDA: 0, arrear: 0, hra: 0, ma: 0, ir: 0, gpf: 0, it: 0, oth: 0, admPT: 0, drPT: 0, duePT: 0, admNet: 0, drNet: 0, dueNet: 0 };
+    let rowsHtml = daCaseRows.map((r, idx) => {
+        sums.drawnDA += r.drawnDA; sums.dueDA += r.dueDA; sums.arrear += r.arrear;
+        sums.hra += r.hra; sums.ma += r.ma; sums.ir += r.ir; sums.gpf += r.gpf; sums.it += r.it; sums.oth += r.oth;
+        sums.admPT += r.admPT; sums.drPT += r.drPT; sums.duePT += r.duePT;
+        sums.admNet += r.admNet; sums.drNet += r.drNet; sums.dueNet += r.dueNet;
+        return `<tr>
+            <td>${idx + 1}</td><td>${monthLabelShort(r.month)}</td><td>${r.basic.toLocaleString('en-IN')}</td>
+            <td>${(r.drawnPct * 100).toFixed(0)}%</td><td>${r.drawnDA.toLocaleString('en-IN')}</td>
+            <td>${(r.duePct * 100).toFixed(0)}%</td><td>${r.dueDA.toLocaleString('en-IN')}</td>
+            <td class="over-cell">${r.arrear.toLocaleString('en-IN')}</td>
+        </tr>`;
+    }).join('');
+    tbody.innerHTML = rowsHtml;
+
+    const totalRow = document.getElementById('daCaseTotalRow');
+    if (totalRow) {
+        totalRow.innerHTML = `<td colspan="4">TOTAL</td><td>${sums.drawnDA.toLocaleString('en-IN')}</td><td></td>
+            <td>${sums.dueDA.toLocaleString('en-IN')}</td><td class="over-cell">${sums.arrear.toLocaleString('en-IN')}</td>`;
+    }
+
+    // 4b. Admissible / Drawn / Due calculation-sheet view (live, Annex-style 3-row-per-month,
+    // ALL COMPONENTS: Basic Pay, D.A, H.R.A, M.A, I.R, GPF, I.T, OTH, P.T, NET).
+    // M.A., I.R., GPF, I.Tax and Other are editable per month here (Admissible row inputs) --
+    // they default per the rules/global fields above but may vary month to month.
+    const calcBody = document.getElementById('daCalcSheetBody');
+    if (calcBody) {
+        let calcHtml = '';
+        daCaseRows.forEach(r => {
+            const mName = monthLabelShort(r.month);
+            const dif = (field, value) => `data-month="${r.month}" data-field="${field}" onchange="updateDaCaseField('${r.month}','${field}',this.value)" value="${value}"`;
+            calcHtml += `
+            <tr class="adm-row">
+                <td>Admissible</td><td>${mName}</td>
+                <td>${r.basic.toLocaleString('en-IN')}</td><td>${r.dueDA.toLocaleString('en-IN')}</td>
+                <td>${r.hra.toLocaleString('en-IN')}</td>
+                <td><input class="tbl-input" ${dif('ma', r.ma)}></td>
+                <td><input class="tbl-input" ${dif('ir', r.ir)}></td>
+                <td><input class="tbl-input" ${dif('gpf', r.gpf)}></td>
+                <td><input class="tbl-input" ${dif('itax', r.it)}></td>
+                <td><input class="tbl-input" ${dif('oth', r.oth)}></td>
+                <td>${r.admPT.toLocaleString('en-IN')}</td><td>${r.admNet.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="drawn-row">
+                <td>Drawn</td><td>&nbsp;</td>
+                <td>${r.basic.toLocaleString('en-IN')}</td><td>${r.drawnDA.toLocaleString('en-IN')}</td>
+                <td>${r.hra.toLocaleString('en-IN')}</td><td>${r.ma.toLocaleString('en-IN')}</td><td>${r.ir.toLocaleString('en-IN')}</td>
+                <td>${r.gpf.toLocaleString('en-IN')}</td><td>${r.it.toLocaleString('en-IN')}</td><td>${r.oth.toLocaleString('en-IN')}</td>
+                <td>${r.drPT.toLocaleString('en-IN')}</td><td>${r.drNet.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="due-row" style="font-weight:bold; background:#fff7ed; color:#9a3412;">
+                <td>Due</td><td>&nbsp;</td>
+                <td>0</td><td>${r.arrear.toLocaleString('en-IN')}</td>
+                <td>0</td><td>0</td><td>0</td>
+                <td>0</td><td>0</td><td>0</td>
+                <td>${r.duePT.toLocaleString('en-IN')}</td><td>${r.dueNet.toLocaleString('en-IN')}</td>
+            </tr>`;
+        });
+        calcBody.innerHTML = calcHtml;
+    }
+    const calcTotalRow = document.getElementById('daCalcSheetTotalRow');
+    if (calcTotalRow) {
+        calcTotalRow.innerHTML = `<td colspan="2">G. TOTAL (DUE)</td><td>0</td><td>${sums.arrear.toLocaleString('en-IN')}</td>
+            <td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>${sums.duePT.toLocaleString('en-IN')}</td><td>${sums.dueNet.toLocaleString('en-IN')}</td>`;
+    }
+
+    // Period split (for two-installment payment, matching the standard DA-case arrear scheme)
+    const p1EndFull = val('daPeriod1End') || '2015-12-31';
+    const p1EndMonth = p1EndFull.slice(0, 7);
+    let p1Arrear = 0, p2Arrear = 0;
+    daCaseRows.forEach(r => { if (r.month <= p1EndMonth) p1Arrear += r.arrear; else p2Arrear += r.arrear; });
+
+    const inst1Pct = (parseFloat(val('daInst1Pct')) || 0) / 100;
+    const inst2Pct = (parseFloat(val('daInst2Pct')) || 0) / 100;
+    const inst1Amt = Math.round(sums.arrear * inst1Pct);
+    const inst2Amt = Math.round(sums.arrear * inst2Pct);
+
+    // GPF, I.Tax and Other now vary month to month (per-row editable in the calc sheet
+    // below); the totals over the whole period are used for the ANNEXURE-1 summary.
+    const daGpfTotal = sums.gpf;
+    const daItaxTotal = sums.it;
+    const daOthTotal = sums.oth;
+    const daNetClaim = Math.max(0, sums.dueNet);
+    const daPtDisplayEl = document.getElementById('daPtDisplay');
+    if (daPtDisplayEl) daPtDisplayEl.value = sums.duePT.toLocaleString('en-IN');
+
+    window._daSums = Object.assign({}, sums, {
+        p1Arrear, p2Arrear, inst1Amt, inst2Amt,
+        gpf: daGpfTotal, itax: daItaxTotal, oth: daOthTotal, pt: sums.duePT, netClaim: daNetClaim
+    });
+
+    const box = document.getElementById('daSummaryBox');
+    if (box) {
+        box.innerHTML = `
+            <strong>Total D.A. Drawn:</strong> ₹ ${sums.drawnDA.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            <strong>Total D.A. Payable:</strong> ₹ ${sums.dueDA.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            <strong>Net D.A. Arrear:</strong> ₹ ${sums.arrear.toLocaleString('en-IN')} [ Rupees ${numberToWords(sums.arrear)} Only ]<br>
+            Period-1 (up to ${fmtDMY(val('daPeriod1End'))}) Arrear: ₹ ${p1Arrear.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            Period-2 (thereafter) Arrear: ₹ ${p2Arrear.toLocaleString('en-IN')}<br>
+            Installment-1 (${val('daInst1Label')}, ${val('daInst1Pct')}%): ₹ ${inst1Amt.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            Installment-2 (${val('daInst2Label')}, ${val('daInst2Pct')}%): ₹ ${inst2Amt.toLocaleString('en-IN')}<br>
+            H.R.A. (total over period): ₹ ${sums.hra.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            M.A. (total over period, may vary month to month): ₹ ${sums.ma.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            I.R. (total over period, may vary month to month): ₹ ${sums.ir.toLocaleString('en-IN')}<br>
+            G.P.F. (total over period, may vary month to month): ₹ ${daGpfTotal.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            I.Tax (total over period, may vary month to month): ₹ ${daItaxTotal.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            Other (total over period, may vary month to month): ₹ ${daOthTotal.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            P.Tax (Auto, total Due): ₹ ${sums.duePT.toLocaleString('en-IN')} &nbsp;|&nbsp;
+            <strong>Net Claim (all components, Due Basic+D.A+H.R.A+M.A+IR&minus;GPF&minus;IT&minus;OTH&minus;PT): ₹ ${daNetClaim.toLocaleString('en-IN')}</strong>`;
+    }
+
+    updateDaAnnex1Preview();
+}
+
+// Per-month override for M.A. / I.R. / GPF / I.Tax / Other in the Tab-3 calc sheet --
+// each of these may vary month to month, so an edit here persists for that month only
+// and survives Generate/Refresh (period changes, HRA-rate edits, etc.) until cleared.
+function updateDaCaseField(mStr, field, v) {
+    if (!daCaseRowData[mStr]) daCaseRowData[mStr] = {};
+    daCaseRowData[mStr][field] = parseFloat(v) || 0;
+    withFocusPreserved(generateDaCaseTable);
+}
+
+// Populates the Live Preview: ANNEXURE-1 (DA Case) card, with ALL COMPONENTS
+// (Basic Pay, D.A, H.R.A, M.A, GPF, I.Tax, P.Tax, Net). G.P.F. and I.Tax come from the
+// manual input fields (#daGpf / #daItax, per month); P.Tax is auto-computed via ptSlab()
+// per month and totalled -- mirrors Tab-1's own manual-PF/IT-but-auto-PT convention.
+function updateDaAnnex1Preview() {
+    const s = window._daSums;
+    if (!s) return;
+    const school = val('daSchoolName') || val('schoolName');
+    const emp = val('daEmpName') || val('staffName');
+    const desig = val('daEmpDesig') || val('designation');
+    const period = `${monthLabelShort(val('daFrom'))} TO ${monthLabelShort(val('daTo'))}`;
+    const reason = val('daReasonText');
+
+    const set = (id, text) => { const el = document.getElementById(id); if (el) el.innerText = text; };
+
+    set('da_disp_school', school);
+    set('da_disp_staff', `${emp} ; ${desig}`);
+    set('da_disp_period', period);
+    set('da_disp_reason', reason);
+
+    // "Basic Pay" shown here is the Due (arrear) Basic Pay -- 0 for a pure D.A. case,
+    // since Basic Pay itself is not part of the D.A. difference being claimed.
+    set('da_cell_basic', '0');
+    set('da_cell_da', s.arrear.toLocaleString('en-IN'));
+    set('da_cell_hra', '0');
+    set('da_cell_ma', '0');
+    set('da_cell_ir', '0');
+    set('da_cell_gross', s.arrear.toLocaleString('en-IN'));
+    // C.P.F/G.P.F here is the Due (arrear) GPF, same as Basic/HRA/M.A/I.R above -- 0 for a
+    // pure D.A. case, since GPF itself does not change between Admissible and Drawn.
+    set('da_cell_gpf', '0');
+
+    // "To be credited to" section: ONLY G. TOTAL (DUE) row values are allowed here --
+    // GPF / I.Tax / Other are 0 in the Due row (they don't differ between Admissible and
+    // Drawn for a pure D.A. case, so they never affect Net Claim -- they cancel out inside
+    // dueNet). Previously this pulled raw admissible-total sums (s.gpf/s.itax/s.oth), which
+    // did not match the G. TOTAL (DUE) row shown in the Calculation Sheet. Fixed to mirror
+    // the Due row exactly: P.T uses duePT, GPF/I.Tax/Other are forced to 0, NET uses dueNet.
+    set('da_cell_pt_credited', s.duePT ? s.duePT.toLocaleString('en-IN') : '0');
+    set('da_cell_gpf_credited', '0');
+    set('da_cell_oth_credited', '0');
+    set('da_cell_other_credited', '0');
+    set('da_cell_net_claim', s.netClaim.toLocaleString('en-IN'));
+
+    set('da_disp_passed_num', s.netClaim);
+    set('da_disp_passed_words', `${numberToWords(s.netClaim)} Only`);
+
+    set('da_box_staff', `${emp} ; ${desig}`);
+    set('da_box_school', school);
+    set('da_box_period', period);
+}
+
+// ---- DA CASE ANNEXURE (printable, portrait) ----
+function docDaAnnexure() {
+    if (!window._daSums) generateDaCaseTable();
+    const s = window._daSums || { drawnDA: 0, dueDA: 0, arrear: 0, p1Arrear: 0, p2Arrear: 0, inst1Amt: 0, inst2Amt: 0, hra: 0, ma: 0, gpf: 0, itax: 0, pt: 0, duePT: 0, dueNet: 0, netClaim: 0 };
+    const school = val('daSchoolName') || val('schoolName');
+    const emp = val('daEmpName') || val('staffName');
+    const desig = val('daEmpDesig') || val('designation');
+    const from = val('daFrom'), to = val('daTo');
+    const reason = val('daReasonText');
+    return `<div style="font-family:'Times New Roman', Times, serif; color:#000; padding:10px;">
+        <div style="text-align:center; font-weight:bold; font-size:1.15rem; margin-bottom:4px; text-decoration:underline;">DA CASE &mdash; ANNEXURE (Arrear Claim for D.A. Difference)</div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.9rem; margin:10px 0;">
+            <tr><td style="padding:3px; width:35%;"><b>Name of School:</b></td><td style="padding:3px;">${school}</td></tr>
+            <tr><td style="padding:3px;"><b>Name of Employee &amp; Designation:</b></td><td style="padding:3px;">${emp} ; ${desig}</td></tr>
+            <tr><td style="padding:3px;"><b>Period of Claim:</b></td><td style="padding:3px;">${monthLabelShort(from)} to ${monthLabelShort(to)}</td></tr>
+            <tr><td style="padding:3px;"><b>Sub:- Arrear due to</b></td><td style="padding:3px;">${reason}</td></tr>
+        </table>
+        <table style="width:100%; border-collapse:collapse; font-size:0.88rem; margin:8px 0;">
+            <tr style="background:#dbe4f3;"><th style="border:1px solid #000; padding:6px;">Particulars</th><th style="border:1px solid #000; padding:6px;">Amount (₹)</th></tr>
+            <tr><td style="border:1px solid #000; padding:6px;">Total D.A. Drawn</td><td style="border:1px solid #000; padding:6px; text-align:right;">${s.drawnDA.toLocaleString('en-IN')}</td></tr>
+            <tr><td style="border:1px solid #000; padding:6px;">Total D.A. Payable / Admissible</td><td style="border:1px solid #000; padding:6px; text-align:right;">${s.dueDA.toLocaleString('en-IN')}</td></tr>
+            <tr style="font-weight:bold;"><td style="border:1px solid #000; padding:6px;">Net D.A. Arrear Claimed</td><td style="border:1px solid #000; padding:6px; text-align:right;">${s.arrear.toLocaleString('en-IN')}</td></tr>
+            <tr><td style="border:1px solid #000; padding:6px;">Period-1 Arrear (up to ${fmtDMY(val('daPeriod1End'))})</td><td style="border:1px solid #000; padding:6px; text-align:right;">${s.p1Arrear.toLocaleString('en-IN')}</td></tr>
+            <tr><td style="border:1px solid #000; padding:6px;">Period-2 Arrear (thereafter)</td><td style="border:1px solid #000; padding:6px; text-align:right;">${s.p2Arrear.toLocaleString('en-IN')}</td></tr>
+            <tr><td style="border:1px solid #000; padding:6px;">Installment-1 Payable in ${val('daInst1Label')} (${val('daInst1Pct')}%)</td><td style="border:1px solid #000; padding:6px; text-align:right;">${s.inst1Amt.toLocaleString('en-IN')}</td></tr>
+            <tr><td style="border:1px solid #000; padding:6px;">Installment-2 Payable in ${val('daInst2Label')} (${val('daInst2Pct')}%)</td><td style="border:1px solid #000; padding:6px; text-align:right;">${s.inst2Amt.toLocaleString('en-IN')}</td></tr>
+        </table>
+
+        <div style="font-weight:bold; font-size:0.95rem; margin:10px 0 4px;">All Components &mdash; Due (Arrear) Summary</div>
+        <table style="width:100%; border-collapse:collapse; font-size:0.85rem; margin:4px 0 8px; text-align:center;">
+            <tr style="background:#dbe4f3;">
+                <th style="border:1px solid #000; padding:6px;">Basic Pay</th>
+                <th style="border:1px solid #000; padding:6px;">D.A</th>
+                <th style="border:1px solid #000; padding:6px;">H.R.A</th>
+                <th style="border:1px solid #000; padding:6px;">M.A</th>
+                <th style="border:1px solid #000; padding:6px;">GPF</th>
+                <th style="border:1px solid #000; padding:6px;">I.T</th>
+                <th style="border:1px solid #000; padding:6px;">P.T</th>
+                <th style="border:1px solid #000; padding:6px;">NET</th>
+            </tr>
+            <tr>
+                <td style="border:1px solid #000; padding:6px;">0</td>
+                <td style="border:1px solid #000; padding:6px;">${s.arrear.toLocaleString('en-IN')}</td>
+                <td style="border:1px solid #000; padding:6px;">0</td>
+                <td style="border:1px solid #000; padding:6px;">0</td>
+                <td style="border:1px solid #000; padding:6px;">0</td>
+                <td style="border:1px solid #000; padding:6px;">0</td>
+                <td style="border:1px solid #000; padding:6px;">${(s.duePT||0).toLocaleString('en-IN')}</td>
+                <td style="border:1px solid #000; padding:6px; font-weight:bold;">${(s.dueNet !== undefined ? s.dueNet : s.arrear).toLocaleString('en-IN')}</td>
+            </tr>
+        </table>
+
+        <div class="annex1-passed-line" style="margin-top:10px; font-weight:bold;">Passed for RS. ${(s.netClaim !== undefined ? s.netClaim : s.arrear).toLocaleString('en-IN')} [ Rupees ${numberToWords(s.netClaim !== undefined ? s.netClaim : s.arrear)} Only ].</div>
+        <div style="font-size:0.85rem; margin-top:12px; text-align:justify;">
+            <b>Certified that</b> the above D.A. arrear has been worked out on the Basic Pay admissible for each month during
+            the claim period, comparing the D.A. rate actually drawn with the D.A. rate payable/admissible as per the
+            applicable Government rate schedule for the corresponding period, and that the amount claimed in this bill
+            has not been drawn before.
+        </div>
+        <div style="margin-top:40px; display:flex; justify-content:space-between;">
+            <div>Prepared by</div>
+            <div style="text-align:right;">Head Master / Head of the Institution<br>${school}</div>
+        </div>
+    </div>`;
+}
+
+// ---- DA CASE CALCULATION SHEET (printable, landscape, Annex-style, 12 months/page max) ----
+function docDaCalcSheet() {
+    if (!window._daSums) generateDaCaseTable();
+    const school = val('daSchoolName') || val('schoolName');
+    const staff = val('daEmpName') || val('staffName');
+    const desig = val('daEmpDesig') || val('designation');
+    const period = `${monthLabelShort(val('daFrom'))} TO ${monthLabelShort(val('daTo'))}`;
+
+    const CHUNK_SIZE = 12;
+    const totalEntries = daCaseRows.length;
+    const totalPages = Math.ceil(totalEntries / CHUNK_SIZE) || 1;
+
+    let html = '';
+    // ALL COMPONENTS running totals: basic, D.A, H.R.A, M.A, GPF, I.T, P.T, NET
+    // (Admissible / Drawn / Due each tracked, matching the Annex calc-sheet style)
+    let runningTotals = {
+        basic: 0, admDA: 0, drDA: 0, dueDA: 0,
+        hra: 0, ma: 0, gpf: 0, it: 0,
+        admPT: 0, drPT: 0, duePT: 0,
+        admNet: 0, drNet: 0, dueNet: 0
+    };
+
+    for (let p = 0; p < totalPages; p++) {
+        const pageNum = p + 1;
+        const startIndex = p * CHUNK_SIZE;
+        const endIndex = Math.min(startIndex + CHUNK_SIZE, totalEntries);
+        const pageRows = daCaseRows.slice(startIndex, endIndex);
+
+        const bfTotals = { ...runningTotals };
+        let pageTableRowsHtml = '';
+
+        if (pageNum > 1) {
+            pageTableRowsHtml += `
+            <tr style="font-weight:bold; background:#f1f5f9; color:#1e293b;">
+                <td colspan="2" style="text-align:left;">B/F (Brought Forward)</td>
+                <td>${bfTotals.basic.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.dueDA.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.hra.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.gpf.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.it.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.duePT.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.dueNet.toLocaleString('en-IN')}</td>
+            </tr>`;
+        }
+
+        pageRows.forEach(r => {
+            runningTotals.basic += r.basic;
+            runningTotals.admDA += r.dueDA;
+            runningTotals.drDA += r.drawnDA;
+            runningTotals.dueDA += r.arrear;
+            runningTotals.hra += r.hra;
+            runningTotals.ma += r.ma;
+            runningTotals.gpf += r.gpf;
+            runningTotals.it += r.it;
+            runningTotals.admPT += r.admPT;
+            runningTotals.drPT += r.drPT;
+            runningTotals.duePT += r.duePT;
+            runningTotals.admNet += r.admNet;
+            runningTotals.drNet += r.drNet;
+            runningTotals.dueNet += r.dueNet;
+
+            const mName = monthLabelShort(r.month);
+
+            pageTableRowsHtml += `
+            <tr class="adm-row">
+                <td>Admissible</td><td>${mName}</td>
+                <td>${r.basic.toLocaleString('en-IN')}</td><td>${r.dueDA.toLocaleString('en-IN')}</td>
+                <td>${r.hra.toLocaleString('en-IN')}</td><td>${r.ma.toLocaleString('en-IN')}</td>
+                <td>${r.gpf.toLocaleString('en-IN')}</td><td>${r.it.toLocaleString('en-IN')}</td>
+                <td>${r.admPT.toLocaleString('en-IN')}</td><td>${r.admNet.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="drawn-row">
+                <td>Drawn</td><td>&nbsp;</td>
+                <td>${r.basic.toLocaleString('en-IN')}</td><td>${r.drawnDA.toLocaleString('en-IN')}</td>
+                <td>${r.hra.toLocaleString('en-IN')}</td><td>${r.ma.toLocaleString('en-IN')}</td>
+                <td>${r.gpf.toLocaleString('en-IN')}</td><td>${r.it.toLocaleString('en-IN')}</td>
+                <td>${r.drPT.toLocaleString('en-IN')}</td><td>${r.drNet.toLocaleString('en-IN')}</td>
+            </tr>
+            <tr class="due-row" style="font-weight:bold; background:#fff7ed; color:#9a3412;">
+                <td>Due</td><td>&nbsp;</td>
+                <td>0</td><td>${r.arrear.toLocaleString('en-IN')}</td>
+                <td>0</td><td>0</td>
+                <td>0</td><td>0</td>
+                <td>${r.duePT.toLocaleString('en-IN')}</td><td>${r.dueNet.toLocaleString('en-IN')}</td>
+            </tr>`;
+        });
+
+        if (pageNum < totalPages) {
+            pageTableRowsHtml += `
+            <tr style="font-weight:bold; background:#e2e8f0; color:#0f172a;">
+                <td colspan="2" style="text-align:left;">C/F (Carried Forward)</td>
+                <td>${runningTotals.basic.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.dueDA.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.hra.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.gpf.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.it.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.duePT.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.dueNet.toLocaleString('en-IN')}</td>
+            </tr>`;
+        } else {
+            pageTableRowsHtml += `
+            <tr style="font-weight:bold; background:#cbd5e1; color:#000;">
+                <td colspan="2" style="text-align:left;">G. TOTAL (DUE)</td>
+                <td>${runningTotals.basic.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.dueDA.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.hra.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.gpf.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.it.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.duePT.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.dueNet.toLocaleString('en-IN')}</td>
+            </tr>`;
+        }
+
+        html += `
+        <div class="annex-page-sheet">
+            <div style="display:flex; justify-content:space-between; align-items:baseline; border-bottom:2px solid #000; padding-bottom:4px; margin-bottom:10px;">
+                <div style="font-weight:bold; font-size:1.15rem; text-decoration:underline;">DA CASE &mdash; CALCULATION SHEET (ANNEX)</div>
+                <div style="font-weight:bold; font-size:0.9rem;">Page ${pageNum} of ${totalPages}</div>
+            </div>
+
+            <div style="font-size:0.85rem; line-height:1.45; margin-bottom:10px;">
+                <div>Name of the School: <strong>${school}</strong></div>
+                <div>Name of the Employee: <strong>${staff} ; ${desig}</strong></div>
+                <div>D.A. Arrear for the period: <strong>${period}</strong></div>
+            </div>
+
+            <table style="width:100%; border-collapse:collapse; font-size:0.78rem; text-align:center;">
+                <thead>
+                    <tr style="background:#e2e8f0; color:#000; font-weight:bold;">
+                        <th style="border:1px solid #000; padding:4px;">Status</th>
+                        <th style="border:1px solid #000; padding:4px;">Month</th>
+                        <th style="border:1px solid #000; padding:4px;">Basic Pay</th>
+                        <th style="border:1px solid #000; padding:4px;">D.A</th>
+                        <th style="border:1px solid #000; padding:4px;">H.R.A</th>
+                        <th style="border:1px solid #000; padding:4px;">M.A</th>
+                        <th style="border:1px solid #000; padding:4px;">GPF</th>
+                        <th style="border:1px solid #000; padding:4px;">I.T</th>
+                        <th style="border:1px solid #000; padding:4px;">P.T</th>
+                        <th style="border:1px solid #000; padding:4px;">NET</th>
+                    </tr>
+                </thead>
+                <tbody>${pageTableRowsHtml}</tbody>
+            </table>
+
+            <div style="margin-top:35px; font-size:0.85rem; font-weight:bold;">
+                <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                    <div style="text-align:left; width:45%;"><em>Checked, Verified and Found Correct</em></div>
+                    <div style="text-align:center; width:45%;"><br><br>________________________________________<br>Signature of Secretary / Administrator</div>
+                </div>
+                <div style="display:flex; justify-content:center; margin-top:25px;">
+                    <div style="text-align:center; width:50%;"><br><br>________________________________________<br>Signature of HOI with Seal</div>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    return html;
+}
+
+async function exportDaCaseExcel() {
+    if (typeof ExcelJS === 'undefined') { alert('ExcelJS library loading. Try again in a moment.'); return; }
+    if (!window._daSums) generateDaCaseTable();
+    const s = window._daSums || { drawnDA: 0, dueDA: 0, arrear: 0, p1Arrear: 0, p2Arrear: 0, inst1Amt: 0, inst2Amt: 0, hra: 0, ma: 0, gpf: 0, itax: 0, pt: 0, duePT: 0, dueNet: 0, netClaim: 0 };
+    const workbook = new ExcelJS.Workbook();
+    const emp = val('daEmpName') || val('staffName');
+    const school = val('daSchoolName') || val('schoolName');
+    const desig = val('daEmpDesig') || val('designation');
+
+    const ws1 = workbook.addWorksheet('DA CASE ANNEXURE');
+    ws1.addRow(['DA CASE - ANNEXURE (Arrear Claim for D.A. Difference)']);
+    ws1.addRow([]);
+    ws1.addRow(['Name of School', school]);
+    ws1.addRow(['Name of Employee', emp, 'Designation', desig]);
+    ws1.addRow(['Period of Claim', `${monthLabelShort(val('daFrom'))} to ${monthLabelShort(val('daTo'))}`]);
+    ws1.addRow(['Reason', val('daReasonText')]);
+    ws1.addRow([]);
+    ws1.addRow(['Particulars', 'Amount (Rs.)']);
+    ws1.addRow(['Total D.A. Drawn', s.drawnDA]);
+    ws1.addRow(['Total D.A. Payable / Admissible', s.dueDA]);
+    ws1.addRow(['Net D.A. Arrear Claimed', s.arrear]);
+    ws1.addRow([`Period-1 Arrear (up to ${fmtDMY(val('daPeriod1End'))})`, s.p1Arrear]);
+    ws1.addRow(['Period-2 Arrear (thereafter)', s.p2Arrear]);
+    ws1.addRow([`Installment-1 (${val('daInst1Label')}, ${val('daInst1Pct')}%)`, s.inst1Amt]);
+    ws1.addRow([`Installment-2 (${val('daInst2Label')}, ${val('daInst2Pct')}%)`, s.inst2Amt]);
+    ws1.addRow(['H.R.A. (total over period)', s.hra]);
+    ws1.addRow(['M.A. (total over period, may vary month to month)', s.ma]);
+    ws1.addRow(['I.R. (total over period, may vary month to month)', s.ir]);
+    ws1.addRow(['G.P.F. (total over period, may vary month to month)', s.gpf]);
+    ws1.addRow(['I.Tax (total over period, may vary month to month)', s.itax]);
+    ws1.addRow(['Other (total over period, may vary month to month)', s.oth]);
+    ws1.addRow(['P.Tax (Auto, total Due)', s.duePT || s.pt]);
+    ws1.addRow(['Net Claim (all components, Due)', s.netClaim]);
+    ws1.addRow([]);
+    ws1.addRow(['Passed for Rs.', s.netClaim, `Rupees ${numberToWords(s.netClaim)} Only`]);
+
+    const ws2 = workbook.addWorksheet('DA CASE CALCULATION');
+    ws2.addRow(['Sl', 'Month', 'Status', 'Basic Pay', 'D.A', 'H.R.A', 'M.A', 'GPF', 'I.T', 'P.T', 'NET']);
+    daCaseRows.forEach((r, idx) => {
+        ws2.addRow([idx + 1, monthLabelShort(r.month), 'Admissible', r.basic, r.dueDA, r.hra, r.ma, r.gpf, r.it, r.admPT, r.admNet]);
+        ws2.addRow(['', '', 'Drawn', r.basic, r.drawnDA, r.hra, r.ma, r.gpf, r.it, r.drPT, r.drNet]);
+        ws2.addRow(['', '', 'Due', 0, r.arrear, 0, 0, 0, 0, r.duePT, r.dueNet]);
+    });
+    ws2.addRow(['', '', 'G. TOTAL (DUE)', 0, s.arrear, 0, 0, 0, 0, s.duePT, s.dueNet]);
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `DA_CASE_ARREAR_${(emp || 'STAFF').replace(/\s+/g, '_')}.xlsx`;
+    link.click();
 }
 
 function printStatement() {
@@ -2716,7 +3692,7 @@ function docAnnex() {
     const totalPages = Math.ceil(totalEntries / CHUNK_SIZE) || 1;
 
     let html = '';
-    let runningTotals = { basic:0, da:0, hra:0, ma:0, gpf:0, it:0, pt:0, net:0 };
+    let runningTotals = { basic:0, da:0, hra:0, ma:0, ir:0, gpf:0, it:0, pt:0, net:0 };
 
     for (let p = 0; p < totalPages; p++) {
         const pageNum = p + 1;
@@ -2735,6 +3711,7 @@ function docAnnex() {
                 <td>${bfTotals.da.toLocaleString('en-IN')}</td>
                 <td>${bfTotals.hra.toLocaleString('en-IN')}</td>
                 <td>${bfTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${bfTotals.ir.toLocaleString('en-IN')}</td>
                 <td>${bfTotals.gpf.toLocaleString('en-IN')}</td>
                 <td>${bfTotals.it.toLocaleString('en-IN')}</td>
                 <td>${bfTotals.pt.toLocaleString('en-IN')}</td>
@@ -2747,7 +3724,8 @@ function docAnnex() {
             runningTotals.basic += c.dueBasic;
             runningTotals.da += c.dueDA;
             runningTotals.hra += c.dueHRA;
-            runningTotals.ma += 0;
+            runningTotals.ma += c.dueMA;
+            runningTotals.ir += c.dueIR;
             runningTotals.gpf += c.dueGPF;
             runningTotals.it += c.dueIT;
             runningTotals.pt += c.duePT;
@@ -2758,17 +3736,17 @@ function docAnnex() {
             pageTableRowsHtml += `
             <tr class="adm-row">
                 <td>Admissible</td><td>${mName}</td>
-                <td>${c.admBasic.toLocaleString('en-IN')}</td><td>${c.admDA.toLocaleString('en-IN')}</td><td>${c.admHRA.toLocaleString('en-IN')}</td><td>0</td>
+                <td>${c.admBasic.toLocaleString('en-IN')}</td><td>${c.admDA.toLocaleString('en-IN')}</td><td>${c.admHRA.toLocaleString('en-IN')}</td><td>${c.admMA.toLocaleString('en-IN')}</td><td>${c.admIR.toLocaleString('en-IN')}</td>
                 <td>${c.admGPF}</td><td>${c.admIT}</td><td>${c.admPT}</td><td>${c.admNet.toLocaleString('en-IN')}</td>
             </tr>
             <tr class="drawn-row">
                 <td>Drawn</td><td>&nbsp;</td>
-                <td>${c.drBasic.toLocaleString('en-IN')}</td><td>${c.drDA.toLocaleString('en-IN')}</td><td>${c.drHRA.toLocaleString('en-IN')}</td><td>0</td>
+                <td>${c.drBasic.toLocaleString('en-IN')}</td><td>${c.drDA.toLocaleString('en-IN')}</td><td>${c.drHRA.toLocaleString('en-IN')}</td><td>${c.drMA.toLocaleString('en-IN')}</td><td>${c.drIR.toLocaleString('en-IN')}</td>
                 <td>${c.drGPF}</td><td>${c.drIT}</td><td>${c.drPT}</td><td>${c.drNet.toLocaleString('en-IN')}</td>
             </tr>
             <tr class="due-row" style="font-weight:bold; background:#fff7ed; color:#9a3412;">
                 <td>Due</td><td>&nbsp;</td>
-                <td>${c.dueBasic.toLocaleString('en-IN')}</td><td>${c.dueDA.toLocaleString('en-IN')}</td><td>${c.dueHRA.toLocaleString('en-IN')}</td><td>0</td>
+                <td>${c.dueBasic.toLocaleString('en-IN')}</td><td>${c.dueDA.toLocaleString('en-IN')}</td><td>${c.dueHRA.toLocaleString('en-IN')}</td><td>${c.dueMA.toLocaleString('en-IN')}</td><td>${c.dueIR.toLocaleString('en-IN')}</td>
                 <td>${c.dueGPF}</td><td>${c.dueIT}</td><td>${c.duePT}</td><td>${c.dueNet.toLocaleString('en-IN')}</td>
             </tr>`;
         });
@@ -2781,6 +3759,7 @@ function docAnnex() {
                 <td>${runningTotals.da.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.hra.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.ir.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.gpf.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.it.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.pt.toLocaleString('en-IN')}</td>
@@ -2794,6 +3773,7 @@ function docAnnex() {
                 <td>${runningTotals.da.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.hra.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.ma.toLocaleString('en-IN')}</td>
+                <td>${runningTotals.ir.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.gpf.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.it.toLocaleString('en-IN')}</td>
                 <td>${runningTotals.pt.toLocaleString('en-IN')}</td>
@@ -2824,6 +3804,7 @@ function docAnnex() {
                         <th style="border:1px solid #000; padding:4px;">D.A</th>
                         <th style="border:1px solid #000; padding:4px;">H.R.A</th>
                         <th style="border:1px solid #000; padding:4px;">M.A</th>
+                        <th style="border:1px solid #000; padding:4px;">IR</th>
                         <th style="border:1px solid #000; padding:4px;">GPF</th>
                         <th style="border:1px solid #000; padding:4px;">I.T.</th>
                         <th style="border:1px solid #000; padding:4px;">P.T.</th>
@@ -2979,13 +3960,14 @@ function docCorrection() {
 
 function showDoc(type) {
     let content = "";
-    if (type === 'annex1' || type === 'annex') {
+    if (type === 'annex1' || type === 'annex' || type === 'dacalc' || type === 'daannex1') {
         setPrintOrientation('landscape'); // LANDSCAPE PAGE SETUP
     } else {
         setPrintOrientation('portrait');  // PORTRAIT PAGE SETUP
     }
 
     if (type === 'annex1') content = document.getElementById('annex1VisualCard').outerHTML;
+    else if (type === 'daannex1') { if (!window._daSums) generateDaCaseTable(); content = document.getElementById('daAnnex1VisualCard').outerHTML; }
     else if (type === 'annex') content = docAnnex();
     else if (type === 'cover') content = docCover();
     else if (type === 'fl') content = docFL();
@@ -2995,6 +3977,8 @@ function showDoc(type) {
     else if (type === 'spouse') content = docSpouseCert();
     else if (type === 'decl') content = docDecl();
     else if (type === 'correction') content = docCorrection();
+    else if (type === 'daannex') content = docDaAnnexure();
+    else if (type === 'dacalc') content = docDaCalcSheet();
     else if (type === 'checklist') content = `
     <div style="font-family:'Times New Roman', Times, serif; color:#000; padding:10px;">
         <div style="font-size:0.9rem;">
@@ -3110,8 +4094,10 @@ window.addEventListener('DOMContentLoaded', function () {
     seedDefaultOverdrawnRows();
     renderOdTable();
     renderLwpTable();
+    autoDeriveDaBasicSegments();
     syncSharedFields();
 });
 </script>
+
 </body>
 </html>
